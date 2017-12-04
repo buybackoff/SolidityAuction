@@ -7,8 +7,8 @@ contract ERC20Basic {
 
 contract Auction {
 
-    ERC20Basic public token = ERC20Basic(0x06147110022B768BA8F99A8f385df11a151A9cc8);
-    uint256 etherPerToken;
+    ERC20Basic public token;
+    uint256 weiPerToken;
 
     address public owner;
     address public wallet;
@@ -74,22 +74,24 @@ contract Auction {
     }
 
 
-    function Auction(address _owner, address _wallet, 
+    function Auction(address _owner, address _wallet, address _token,
         uint _startSeconds, uint _endSeconds, 
-        uint256 _etherPerToken, string _item, bool _allowManagedBids) 
+        uint256 _weiPerToken, string _item, bool _allowManagedBids) 
         public 
     {
         require(_owner != address(0x0));
         require(_wallet != address(0x0));
+        require(_token != address(0x0));
         require (_startSeconds < _endSeconds);
         require (_startSeconds >= now);
-        require (_etherPerToken > (4*1e15));
+        require (_weiPerToken > (1e15) && _weiPerToken < 5 * (1e15));
         
         owner = _owner;
         wallet = _wallet;
+        token = ERC20Basic(_token);
         startSeconds = _startSeconds;
         endSeconds = _endSeconds;
-        etherPerToken = _etherPerToken;
+        weiPerToken = _weiPerToken;
         item = _item;
         allowManagedBids = _allowManagedBids;
     }
@@ -118,7 +120,7 @@ contract Auction {
             require(token.transferFrom(msg.sender, this, tokens));
             // safe math is already in transferFrom
             uint256 tokenBid = tokenBalances[msg.sender] + tokens;
-            totalBid = tokenBid * etherPerToken;
+            totalBid = tokenBid * weiPerToken;
             tokenBalances[msg.sender] = tokenBid;
         } else {
             require(msg.value > 0);
@@ -159,6 +161,16 @@ contract Auction {
         return true;
     }
 
+    function setWeiPerToken(uint256 _weiPerToken)
+        onlyAfterStart
+        onlyBeforeEnd
+        onlyNotCanceled
+        onlyOwner
+        public
+    {
+        require (_weiPerToken > (1e15) && _weiPerToken < 5 * (1e15));
+        weiPerToken = _weiPerToken;
+    }
 
     function withdraw()
         public
@@ -210,7 +222,7 @@ contract Auction {
 
             require(tokenBid > 0 || etherBid > 0);
 
-            require(tokenBid * etherPerToken + etherBid == highestBid);
+            require(tokenBid * weiPerToken + etherBid == highestBid);
         }
 
         finalized = true;
@@ -237,15 +249,38 @@ contract Auction {
 
 library AuctionFactory {
 
-    event AuctionProduced(address indexed addr, string indexed _item);
+    event AuctionProduced(address indexed addr, string _item);
 
     function produce(address _wallet, 
         uint _startSeconds, uint _endSeconds, 
-        uint256 _etherPerToken, string _item, bool _allowManagedBids)
+        uint256 _weiPerToken, string _item, bool _allowManagedBids)
         public
         returns (address)
     {
-        address addr = new Auction(msg.sender, _wallet, _startSeconds, _endSeconds, _etherPerToken, _item, _allowManagedBids);
+        address addr = new Auction(msg.sender, _wallet, 0x06147110022B768BA8F99A8f385df11a151A9cc8, _startSeconds, _endSeconds, _weiPerToken, _item, _allowManagedBids);
+        AuctionProduced(addr, _item);
+        return addr;
+    }
+
+    function produceForOwner(address _owner, address _wallet, 
+        uint _startSeconds, uint _endSeconds, 
+        uint256 _weiPerToken, string _item, bool _allowManagedBids)
+        public
+        returns (address)
+    {
+        address addr = new Auction(_owner, _wallet, 0x06147110022B768BA8F99A8f385df11a151A9cc8, _startSeconds, _endSeconds, _weiPerToken, _item, _allowManagedBids);
+        AuctionProduced(addr, _item);
+        return addr;
+    }
+
+    // token for testing
+    function produceForOwnerCustomToken(address _owner, address _wallet, address _token,
+        uint _startSeconds, uint _endSeconds, 
+        uint256 _weiPerToken, string _item, bool _allowManagedBids)
+        public
+        returns (address)
+    {
+        address addr = new Auction(_owner, _wallet, _token, _startSeconds, _endSeconds, _weiPerToken, _item, _allowManagedBids);
         AuctionProduced(addr, _item);
         return addr;
     }

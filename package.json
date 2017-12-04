@@ -1,10 +1,11 @@
 {
-  "name": "soltsice-auction",
+  "name": "tokenstars-auction",
   "version": "0.1.0",
   "description": "simple solidity auction implementation",
   "main": "index.js",
   "scripts": {
-    "test": "jest --watch"
+    "test": "jest --watch",
+    "dist": "copyfiles -u 2 build/contracts/**/* src/artifacts && soltsice ./src/artifacts ./src/contracts && tsc && copyfiles -u 2 src/artifacts/**/* dist/artifacts"
   },
   "author": "Victor Baybekov",
   "license": "MIT",
@@ -12,10 +13,30 @@
     "@types/jest": "^21.1.8",
     "@types/node": "^8.0.53",
     "bignumber.js": "^4.1.0",
-    "ethereumjs-testrpc": "^6.0.3",
     "jest": "^21.2.1",
     "soltsice": "^0.9.8",
     "ts-jest": "^21.2.3",
     "tslint": "^5.8.0"
+  },
+  "jest": {
+    "transform": {
+      "^.+\\.tsx?$": "ts-jest"
+    },
+    "testMatch": [
+      "<rootDir>/src/test/*.ts"
+    ],
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js",
+      "jsx",
+      "json"
+    ]
+  },
+  "devDependencies": {
+    "copyfiles": "^1.2.0",
+    "ethereumjs-testrpc": "^6.0.3",
+    "typescript": "^2.6.2",
+    "zeppelin-solidity": "^1.4.0"
   }
 }
