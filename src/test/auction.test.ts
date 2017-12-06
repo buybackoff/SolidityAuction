@@ -2,11 +2,11 @@ import { AuctionFactory, Auction, AceToken } from '../contracts'
 import { W3, getStorage, Storage } from 'soltsice';
 import * as TRPC from 'ethereumjs-testrpc';
 
-let w3 = new W3(new W3.providers.HttpProvider('http://localhost:8544'));
-// let w3: W3 = new W3(TRPC.provider({
-//     mnemonic: 'tokenstars',
-//     network_id: 315
-// }));
+// let w3 = new W3(new W3.providers.HttpProvider('http://localhost:8544'));
+let w3: W3 = new W3(TRPC.provider({
+    mnemonic: 'tokenstars',
+    network_id: 315
+}));
 
 W3.Default = w3;
 let activeAccount = '0xc08d5fe987c2338d28fd020b771a423b68e665e4';

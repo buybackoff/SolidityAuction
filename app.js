@@ -3,13 +3,13 @@ import Web3 from 'web3'
 import utils from 'ethereumjs-util'
 import Transaction from 'ethereumjs-tx'
 
-const web3 = new Web3(new Web3.providers.HttpProvider(process.env.WEB3))
+const web3 = new Web3(new Web3.providers.HttpProvider(process.env.WEB3 || 'http://localhost:8545'))
 
 const CONSTANTS = {
   networkId: 1,
   from: process.env.FROM,
   privateKey: new Buffer(process.env.PRIVATE_KEY, 'hex'),
-  gasPrice: parseInt(process.env.GAS_PRICE)
+  gasPrice: parseInt(process.env.GAS_PRICE || 2000000000)
 }
 const server = fastify()
 
@@ -143,6 +143,9 @@ server.post('/*', opts, async (request, reply) => {
 
 // Run the server!
 server.listen(3000, function (err) {
-  if (err) throw err
+  if (err) {
+    console.log('ERR:', err);
+    throw err;
+  }
   server.log.info(`server listening on ${server.server.address().port}`)
 })

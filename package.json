@@ -4,7 +4,7 @@
   "description": "simple solidity auction implementation",
   "main": "index.js",
   "scripts": {
-    "start": "babel-node src/app.js",
+    "start": "babel-node app.js",
     "test": "jest --watch",
     "dist": "copyfiles -u 2 build/contracts/**/* src/artifacts && soltsice ./src/artifacts ./src/contracts && tsc && copyfiles -u 2 src/artifacts/**/* dist/artifacts"
   },

@@ -130,14 +130,12 @@ contract Auction {
         etherBalances[msg.sender] = etherBid;
         totalBid = totalBid + etherBid;
 
-        // revert if this bid won't become the highest one
-        require(totalBid > highestBid);
-
-        highestBid = totalBid;
-        highestBidder = msg.sender;
-        highestManagedBidder = 0;
-
-        Bid(msg.sender, highestBid);
+        if (totalBid > highestBid) {
+            highestBid = totalBid;
+            highestBidder = msg.sender;
+            highestManagedBidder = 0;
+        }
+        Bid(msg.sender, totalBid);
         return true;
     }
 
