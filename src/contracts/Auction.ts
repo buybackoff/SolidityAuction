@@ -20,7 +20,7 @@ export class Auction extends SoltsiceContract {
 
     constructor(
         deploymentParams: string | W3.TC.TxParams | object,
-        ctorParams?: {_owner: string, _wallet: string, _token: string, _startSeconds: BigNumber | number, _endSeconds: BigNumber | number, _weiPerToken: BigNumber | number, _item: string, _allowManagedBids: boolean},
+        ctorParams?: {_owner: string, _wallet: string, _token: string, _endSeconds: BigNumber | number, _weiPerToken: BigNumber | number, _item: string, _allowManagedBids: boolean},
         w3?: W3,
         link?: SoltsiceContract[]
     ) {
@@ -28,7 +28,7 @@ export class Auction extends SoltsiceContract {
         super(
             w3,
             Auction.Artifacts,
-            ctorParams ? [ctorParams!._owner, ctorParams!._wallet, ctorParams!._token, ctorParams!._startSeconds, ctorParams!._endSeconds, ctorParams!._weiPerToken, ctorParams!._item, ctorParams!._allowManagedBids] : [],
+            ctorParams ? [ctorParams!._owner, ctorParams!._wallet, ctorParams!._token, ctorParams!._endSeconds, ctorParams!._weiPerToken, ctorParams!._item, ctorParams!._allowManagedBids] : [],
             deploymentParams,
             link
         );
@@ -191,10 +191,10 @@ export class Auction extends SoltsiceContract {
     public managedBid = Object.assign(
         // tslint:disable-next-line:max-line-length
         // tslint:disable-next-line:variable-name
-        (managedBidder: BigNumber | number, managedBid: BigNumber | number, txParams?: W3.TC.TxParams): Promise<W3.TC.TransactionResult> => {
+        (_managedBidder: BigNumber | number, _managedBid: BigNumber | number, txParams?: W3.TC.TxParams): Promise<W3.TC.TransactionResult> => {
             return new Promise((resolve, reject) => {
                 this._instance.then((inst) => {
-                    inst.managedBid(managedBidder, managedBid, txParams || this._sendParams)
+                    inst.managedBid(_managedBidder, _managedBid, txParams || this._sendParams)
                         .then((res) => resolve(res))
                         .catch((err) => reject(err));
                 });
@@ -203,10 +203,10 @@ export class Auction extends SoltsiceContract {
         {
             // tslint:disable-next-line:max-line-length
             // tslint:disable-next-line:variable-name
-            sendTransaction: (managedBidder: BigNumber | number, managedBid: BigNumber | number, txParams?: W3.TC.TxParams): Promise<string> => {
+            sendTransaction: (_managedBidder: BigNumber | number, _managedBid: BigNumber | number, txParams?: W3.TC.TxParams): Promise<string> => {
                 return new Promise((resolve, reject) => {
                     this._instance.then((inst) => {
-                        inst.managedBid.sendTransaction(managedBidder, managedBid, txParams || this._sendParams)
+                        inst.managedBid.sendTransaction(_managedBidder, _managedBid, txParams || this._sendParams)
                             .then((res) => resolve(res))
                             .catch((err) => reject(err));
                     });
@@ -216,10 +216,10 @@ export class Auction extends SoltsiceContract {
         {
             // tslint:disable-next-line:max-line-length
             // tslint:disable-next-line:variable-name
-            data: (managedBidder: BigNumber | number, managedBid: BigNumber | number): Promise<string> => {
+            data: (_managedBidder: BigNumber | number, _managedBid: BigNumber | number): Promise<string> => {
                 return new Promise((resolve, reject) => {
                     this._instance.then((inst) => {
-                        resolve(inst.managedBid.request(managedBidder, managedBid).params[0].data);
+                        resolve(inst.managedBid.request(_managedBidder, _managedBid).params[0].data);
                     });
                 });
             }
@@ -227,10 +227,10 @@ export class Auction extends SoltsiceContract {
         {
             // tslint:disable-next-line:max-line-length
             // tslint:disable-next-line:variable-name
-            estimateGas: (managedBidder: BigNumber | number, managedBid: BigNumber | number): Promise<number> => {
+            estimateGas: (_managedBidder: BigNumber | number, _managedBid: BigNumber | number): Promise<number> => {
                 return new Promise((resolve, reject) => {
                     this._instance.then((inst) => {
-                        inst.managedBid.estimateGas(managedBidder, managedBid).then((g) => resolve(g));
+                        inst.managedBid.estimateGas(_managedBidder, _managedBid).then((g) => resolve(g));
                     });
                 });
             }
@@ -476,24 +476,11 @@ export class Auction extends SoltsiceContract {
     
     // tslint:disable-next-line:max-line-length
     // tslint:disable-next-line:variable-name
-    public startSeconds( txParams?: W3.TC.TxParams): Promise<BigNumber> {
-        return new Promise((resolve, reject) => {
-            this._instance.then((inst) => {
-                inst.startSeconds
-                    .call( txParams || this._sendParams)
-                    .then((res) => resolve(res))
-                    .catch((err) => reject(err));
-            });
-        });
-    }
-    
-    // tslint:disable-next-line:max-line-length
-    // tslint:disable-next-line:variable-name
-    public token(_owner: string, _wallet: string, _token: string, _startSeconds: BigNumber | number, _endSeconds: BigNumber | number, _weiPerToken: BigNumber | number, _item: string, _allowManagedBids: boolean, txParams?: W3.TC.TxParams): Promise<string> {
+    public token( txParams?: W3.TC.TxParams): Promise<string> {
         return new Promise((resolve, reject) => {
             this._instance.then((inst) => {
                 inst.token
-                    .call(_owner, _wallet, _token, _startSeconds, _endSeconds, _weiPerToken, _item, _allowManagedBids, txParams || this._sendParams)
+                    .call( txParams || this._sendParams)
                     .then((res) => resolve(res))
                     .catch((err) => reject(err));
             });
