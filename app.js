@@ -118,64 +118,6 @@ server.post('/contract', opts, async (request, reply) => {
   })
 })
 
-server.get('/contract/*', opts, async (request, reply) => {
-  const commands = request.params['*'].split('/')
-
-  if (!request.body.contract) {
-    return reply.send({
-      error: 'Internal Server Error',
-      message: `contract name is required`,
-      statusCode: 500
-    })
-  }
-
-  if (!request.body.method) {
-    return reply.send({
-      error: 'Internal Server Error',
-      message: `contract method is required`,
-      statusCode: 500
-    })
-  }
-
-  const json = require(`./src/artifacts/Auction.json`)
-  const address = request.body.at || json.networks[CONSTANTS.networkId].address
-  const method = request.body.method
-  let args = request.body.args || []
-  const contract = new web3.eth.Contract(json.abi, address)
-
-
-  const contractMethod = contract.methods[method](...args)
-
-  contractMethod.estimateGas({ gas: 5 * 1e6 }, (error, estimateGas) => {
-    if (error) {
-      return reply.send(error)
-    }
-
-    if (contractMethod._method.constant) {
-      contractMethod.call({}, (error, result) => {
-        if (error) {
-          return reply.send(error)
-        }
-        return reply.send({
-          result,
-          statusCode: 200
-        })
-      })
-    } else {
-      const data = contractMethod.encodeABI()
-      makeTransaction(address, 0, data, estimateGas, CONSTANTS.gasPrice)
-        .then(result => reply.send({
-          result,
-          statusCode: 200
-        }))
-        .catch(error => reply.send({
-          error: 'Internal Server Error',
-          message: error,
-          statusCode: 500
-        }))
-    }
-  })
-})
 
 server.get('/events/*', async (request, reply) => {
 

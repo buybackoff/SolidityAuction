@@ -81,7 +81,7 @@ curl --request POST \
 ### SetWeiPerToken
 
 Same as above, a single parameter: `uint256 _weiPerToken` must meet the requirement: `require (_weiPerToken > (1e15) && _weiPerToken < 5 * (1e15));`
-We could update the rate daily
+We could update the rate daily. Could be called only by owner.
 
 ###  FinalizeAuction
 
@@ -115,6 +115,29 @@ curl --request POST \
   
 {
     "result": "0xfe42d74d7ea48402aa901d3eca295e6ffe1e17e7526b728e32db9bbab0fe1d9c",
+    "statusCode": 200
+}
+```
+
+### Highest bidder
+
+Methods `highestBidder`, `highestManagedBidder`, `highestBid` with no args.
+
+!NB! Could also parse events - there is an event NewHighestBidder with three parameters: `NewHighestBidder(address indexed bidder, uint64 indexed managedBidder, uint256 indexed bid);`
+If managedBidder is zero then Ethereum direct bidder is the highest. `bid` is in wei tokens, need to test parsing.
+
+
+```
+curl --request POST \
+  --url http://localhost:3000/contract \
+  --header 'content-type: application/json' \
+  --data '{"contract": "Auction",
+            "method": "highestBidder",
+            "at": "0xHexOfAuctionAddress",
+            "args": []}'
+  
+{
+    "result": "...value or address...",
     "statusCode": 200
 }
 ```
