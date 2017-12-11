@@ -3,12 +3,19 @@ import Web3 from 'web3'
 import utils from 'ethereumjs-util'
 import Transaction from 'ethereumjs-tx'
 
-const web3 = new Web3(new Web3.providers.HttpProvider(process.env.WEB3 || 'http://localhost:8545'))
+const web3 = new Web3(new Web3.providers.HttpProvider(process.env.WEB3 || 'http://localhost:8544'))
+
+// could paste private key right here
+const privateKeyHex = '' || process.env.PRIVATE_KEY;
+const publicKeyHex = utils.bufferToHex(utils.privateToAddress(new Buffer(privateKeyHex, 'hex')));
+if (process.env.FROM && process.env.FROM !== publicKeyHex) {
+  throw new Error('Provided address in process.env.FROM doesn\'t match the private key');
+}
 
 const CONSTANTS = {
   networkId: 1,
-  from: process.env.FROM,
-  privateKey: new Buffer(process.env.PRIVATE_KEY, 'hex'),
+  from: publicKeyHex,
+  privateKey: new Buffer(privateKeyHex, 'hex'),
   gasPrice: parseInt(process.env.GAS_PRICE || 2000000000)
 }
 const server = fastify()
@@ -68,7 +75,7 @@ server.post('/contract', opts, async (request, reply) => {
       error: 'Internal Server Error',
       message: `contract method is required`,
       statusCode: 500
-    }) 
+    })
   }
 
   const json = require(`./src/artifacts/${request.body.contract}`)
@@ -91,8 +98,8 @@ server.post('/contract', opts, async (request, reply) => {
           return reply.send(error)
         }
         return reply.send({
-            result,
-            statusCode: 200
+          result,
+          statusCode: 200
         })
       })
     } else {
@@ -107,7 +114,32 @@ server.post('/contract', opts, async (request, reply) => {
           message: error,
           statusCode: 500
         }))
-    } 
+    }
+  })
+})
+
+server.get('/events/*', async (request, reply) => {
+
+  const commands = request.params['*'].split('/')
+
+  const json = require(`./src/artifacts/Auction.json`)
+  const address = commands[0] || request.body.at || json.networks[CONSTANTS.networkId].address
+  const contract = new web3.eth.Contract(json.abi, address)
+
+  const fromBlock = commands.length > 1 ? +commands[1] : 0;
+  // see https://github.com/ethereum/web3.js/issues/989
+  contract.getPastEvents("allEvents", {
+    fromBlock: fromBlock,
+    toBlock: 'latest'
+  }, (error, result) => {
+    if (error) {
+      console.log('ERR', error);
+      return reply.send(error)
+    }
+    return reply.send({
+      result,
+      statusCode: 200
+    })
   })
 })
 
@@ -135,11 +167,11 @@ server.post('/*', opts, async (request, reply) => {
     }
 
     return reply.send({
-        result,
-        'statusCode': 200
+      result,
+      'statusCode': 200
     })
   })
-}) 
+})
 
 // Run the server!
 server.listen(3000, function (err) {
@@ -147,5 +179,6 @@ server.listen(3000, function (err) {
     console.log('ERR:', err);
     throw err;
   }
+  console.log(`server listening on ${server.server.address().port}`);
   server.log.info(`server listening on ${server.server.address().port}`)
 })

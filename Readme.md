@@ -113,3 +113,22 @@ curl --request POST \
     "statusCode": 200
 }
 ```
+
+
+### Get All Events
+
+Get request: http://localhost:3000/events/0x305d46467b8c2ebf89b154f8f0c27d9aee75271f/1391507
+
+http://localhost:3000/events/[0xContractAddress]/[block_number]
+
+* block_number could be ommited and then set to zero
+* if there are too many events then use block number from the lastest block minus 1 (without decrementing there is a risk of missing some event)
+
+```
+curl --request POST --url http://localhost:3000/events --header 'content-type: application/json'  --data '{"contract": "Auction", "at": "0x305d46467b8c2ebf89b154f8f0c27d9aee75271f"}'
+  
+{
+    "result": [array of event logs],
+    "statusCode": 200
+}
+```
