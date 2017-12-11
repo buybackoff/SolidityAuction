@@ -23,6 +23,10 @@ curl --request POST \
 
 ### Create new auction
 
+!IMPORTANT! Wallet must be a notmal contract or a wallet contract that supports ERC20 tokens in the case
+when token payments are supported, otherwise tokens will be lost (https://www.reddit.com/r/ethereum/comments/60ql37/attention_be_careful_using_ethereum_tokens/)
+
+
 * at - address of deployed factory, should be a part of a config
 * args - correspond to solidity signature: `address _owner, address _wallet, address _token, uint _endSeconds, uint256 _weiPerToken, string _item, bool _allowManagedBids`
 * _owner - account managing the auction process: '0xHexOfOwnerAddress'
@@ -30,6 +34,7 @@ curl --request POST \
 * _token - address of a deployed Ace token, '0x06147110022B768BA8F99A8f385df11a151A9cc8' on mainnet
 * _endSeconds - end time in Unix seconds, 1514160000 for Dec 25, 2017 (need to double check!)
 * _weiPerToken - exchange rate of one Ace token to Ether *wei* (1e-18), 0.0001 BTC is approximately 2400000000000000
+* _maxTokens - max ACE tokens to accept (must be below 1000)
 * _item - short string desciption of item
 * _allowManagedBids - allow managed bids in fiat/BTC from backend, should be true
 
@@ -40,7 +45,7 @@ curl --request POST \
   --data '{"contract": "AuctionFactory",
             "method": "produceForOwnerCustomToken",
             "at": "0xHexOfAuctionFactoryAddress",
-            "args": ["0xHexOfOwnerAddress", "0xHexOfWalletAddress", "0x06147110022B768BA8F99A8f385df11a151A9cc8", 1514160000, 2400000000000000, "test_item", true ]}'
+            "args": ["0xHexOfOwnerAddress", "0xHexOfWalletAddress", "0x06147110022B768BA8F99A8f385df11a151A9cc8", 1514160000, 2400000000000000, 50, "test_item", true ]}'
   
 {
     "result": "0xfe42d74d7ea48402aa901d3eca295e6ffe1e17e7526b728e32db9bbab0fe1d9c",

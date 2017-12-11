@@ -9,6 +9,7 @@ contract Auction {
 
     ERC20Basic public token;
     uint256 weiPerToken;
+    uint256 maxTokens;
 
     address public owner;
     address public wallet;
@@ -31,10 +32,12 @@ contract Auction {
 
     // bool ownerHasWithdrawn;
 
-    event Bid(address bidder, uint256 bid);
-    event ManagedBid(uint64 bidder, uint256 bid);
-    event Withdrawal(address withdrawer, uint256 etherAmount, uint256 tokensAmount);
-    event Finalized(address bidder, uint64 managedBidder, uint256 amount);
+    event Bid(address indexed bidder, uint256 indexed totalBidInEther, uint256 indexed tokensBid);
+    event ManagedBid(uint64 indexed bidder, uint256 indexed bid);
+    event NewHighestBidder(address indexed bidder, uint64 indexed managedBidder, uint256 indexed bid);
+    event Withdrawal(address indexed withdrawer, uint256 indexed etherAmount, uint256 indexed tokensAmount);
+    event Finalized(address indexed bidder, uint64 indexed managedBidder, uint256 indexed amount);
+    event ExtendedEndTime(uint256 indexed newEndtime);
     event Canceled();
 
     modifier onlyOwner {
@@ -70,7 +73,7 @@ contract Auction {
 
     function Auction(address _owner, address _wallet, address _token,
         uint _endSeconds, 
-        uint256 _weiPerToken, string _item, bool _allowManagedBids) 
+        uint256 _weiPerToken, uint256 _maxTokens, string _item, bool _allowManagedBids) 
         public 
     {
         require(_owner != address(0x0));
@@ -78,12 +81,14 @@ contract Auction {
         require(_token != address(0x0));
         require (_endSeconds > now);
         require (_weiPerToken > (1e15) && _weiPerToken < 5 * (1e15));
+        require(_maxTokens <= 1000);
         
         owner = _owner;
         wallet = _wallet;
         token = ERC20Basic(_token);
         endSeconds = _endSeconds;
         weiPerToken = _weiPerToken;
+        maxTokens = _maxTokens;
         item = _item;
         allowManagedBids = _allowManagedBids;
     }
@@ -108,9 +113,11 @@ contract Auction {
         uint256 totalBid;
 
         if (tokens > 0) {
+            // sender must approve transfer before calling this function
             require(token.transferFrom(msg.sender, this, tokens));
             // safe math is already in transferFrom
             uint256 tokenBid = tokenBalances[msg.sender] + tokens;
+            require(tokenBid <= maxTokens);
             totalBid = tokenBid * weiPerToken;
             tokenBalances[msg.sender] = tokenBid;
         } else {
@@ -125,8 +132,13 @@ contract Auction {
             highestBid = totalBid;
             highestBidder = msg.sender;
             highestManagedBidder = 0;
+            NewHighestBidder(highestBidder, highestManagedBidder, highestBid);
+            if ((endSeconds - now) < 1800) {
+                endSeconds = now + 1800;
+                ExtendedEndTime(endSeconds);
+            }
         }
-        Bid(msg.sender, totalBid);
+        Bid(msg.sender, totalBid, tokens);
         return true;
     }
 
@@ -139,13 +151,17 @@ contract Auction {
         public
         returns (bool success)
     {
-        require(_managedBid > highestBid);
-
-        highestBid = _managedBid;
-        highestBidder = address(0);
-        highestManagedBidder = _managedBidder;
-
-        ManagedBid(_managedBidder, highestBid);
+        if (_managedBid > highestBid) {
+            highestBid = _managedBid;
+            highestBidder = address(0);
+            highestManagedBidder = _managedBidder;
+            NewHighestBidder(highestBidder, highestManagedBidder, highestBid);
+            if ((endSeconds - now) < 1800) {
+                endSeconds = now + 1800;
+                ExtendedEndTime(endSeconds);
+            }
+        }
+        ManagedBid(_managedBidder, _managedBid);
         return true;
     }
 
@@ -165,10 +181,11 @@ contract Auction {
     {
         // anyone could withdraw at any time except the highest bidder
         // if canceled, the highest bidder could withdraw as well
-        require(msg.sender != highestBidder || canceled);
+        require((msg.sender != highestBidder) || canceled);
 
         uint256 tokenBid = tokenBalances[msg.sender];
         if (tokenBid > 0) {
+            tokenBalances[msg.sender] = 0;
             require(token.transfer(msg.sender, tokenBid));
         }
 
@@ -198,6 +215,7 @@ contract Auction {
         if (highestBidder != address(0)) {
             uint256 tokenBid = tokenBalances[highestBidder];
             if (tokenBid > 0) {
+                tokenBalances[highestBidder] = 0;
                 require(token.transfer(wallet, tokenBid));
             }
 
@@ -209,14 +227,14 @@ contract Auction {
 
             require(tokenBid > 0 || etherBid > 0);
 
-            require(tokenBid * weiPerToken + etherBid == highestBid);
+            // this condition could break after we have added ability to change the rate after ctor
+            // and it won't be possible to set weiPerToken due to onlyAfterEnd/onlyBeforeEnd different modifiers
+            // ... require(tokenBid * weiPerToken + etherBid == highestBid);
         }
 
         finalized = true;
         Finalized(highestBidder, highestManagedBidder, highestBid);
-
         return true;
-        
     }
 
 
@@ -239,22 +257,22 @@ library AuctionFactory {
     event AuctionProduced(address indexed addr, string _item);
 
     function produce(address _wallet, uint _endSeconds, 
-        uint256 _weiPerToken, string _item, bool _allowManagedBids)
+        uint256 _weiPerToken, uint256 _maxTokens, string _item, bool _allowManagedBids)
         public
         returns (address)
     {
-        address addr = new Auction(msg.sender, _wallet, 0x06147110022B768BA8F99A8f385df11a151A9cc8, _endSeconds, _weiPerToken, _item, _allowManagedBids);
+        address addr = new Auction(msg.sender, _wallet, 0x06147110022B768BA8F99A8f385df11a151A9cc8, _endSeconds, _weiPerToken, _maxTokens, _item, _allowManagedBids);
         AuctionProduced(addr, _item);
         return addr;
     }
 
     function produceForOwner(address _owner, address _wallet, 
         uint _endSeconds, 
-        uint256 _weiPerToken, string _item, bool _allowManagedBids)
+        uint256 _weiPerToken, uint256 _maxTokens, string _item, bool _allowManagedBids)
         public
         returns (address)
     {
-        address addr = new Auction(_owner, _wallet, 0x06147110022B768BA8F99A8f385df11a151A9cc8, _endSeconds, _weiPerToken, _item, _allowManagedBids);
+        address addr = new Auction(_owner, _wallet, 0x06147110022B768BA8F99A8f385df11a151A9cc8, _endSeconds, _weiPerToken, _maxTokens, _item, _allowManagedBids);
         AuctionProduced(addr, _item);
         return addr;
     }
@@ -262,11 +280,11 @@ library AuctionFactory {
     // token for testing
     function produceForOwnerCustomToken(address _owner, address _wallet, address _token,
         uint _endSeconds, 
-        uint256 _weiPerToken, string _item, bool _allowManagedBids)
+        uint256 _weiPerToken, uint256 _maxTokens, string _item, bool _allowManagedBids)
         public
         returns (address)
     {
-        address addr = new Auction(_owner, _wallet, _token, _endSeconds, _weiPerToken, _item, _allowManagedBids);
+        address addr = new Auction(_owner, _wallet, _token, _endSeconds, _weiPerToken, _maxTokens, _item, _allowManagedBids);
         AuctionProduced(addr, _item);
         return addr;
     }

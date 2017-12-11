@@ -20,7 +20,7 @@ export class Auction extends SoltsiceContract {
 
     constructor(
         deploymentParams: string | W3.TC.TxParams | object,
-        ctorParams?: {_owner: string, _wallet: string, _token: string, _endSeconds: BigNumber | number, _weiPerToken: BigNumber | number, _item: string, _allowManagedBids: boolean},
+        ctorParams?: {_owner: string, _wallet: string, _token: string, _endSeconds: BigNumber | number, _weiPerToken: BigNumber | number, _maxTokens: BigNumber | number, _item: string, _allowManagedBids: boolean},
         w3?: W3,
         link?: SoltsiceContract[]
     ) {
@@ -28,7 +28,7 @@ export class Auction extends SoltsiceContract {
         super(
             w3,
             Auction.Artifacts,
-            ctorParams ? [ctorParams!._owner, ctorParams!._wallet, ctorParams!._token, ctorParams!._endSeconds, ctorParams!._weiPerToken, ctorParams!._item, ctorParams!._allowManagedBids] : [],
+            ctorParams ? [ctorParams!._owner, ctorParams!._wallet, ctorParams!._token, ctorParams!._endSeconds, ctorParams!._weiPerToken, ctorParams!._maxTokens, ctorParams!._item, ctorParams!._allowManagedBids] : [],
             deploymentParams,
             link
         );

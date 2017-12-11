@@ -62,7 +62,7 @@ it('Could deploy auction factory and create auction', async () => {
 
     let end = (new Date(2017, 12, 25).getTime() / 1000);
     let weiPerToken = w3.toBigNumber('4000000000000000');
-    let auctionTx = await factory.produceForOwnerCustomToken(activeAccount, activeAccount, tokenAddress, end, weiPerToken, 'test_item', true, deployParams);
+    let auctionTx = await factory.produceForOwnerCustomToken(activeAccount, activeAccount, tokenAddress, end, weiPerToken, 50, 'test_item', true, deployParams);
 
     console.log('AUCTION TX', auctionTx);
     let args = auctionTx.logs[0].args;
