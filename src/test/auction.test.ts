@@ -1,20 +1,27 @@
 import { AuctionFactory, Auction, AceToken } from '../contracts'
-import { W3, getStorage, Storage } from 'soltsice';
-import * as TRPC from 'ethereumjs-testrpc';
+import { W3, getStorage, Storage, TestRPC } from 'soltsice';
+import * as Ganache from 'ganache-cli';
 
 // let w3 = new W3(new W3.providers.HttpProvider('http://localhost:8544'));
-let w3: W3 = new W3(TRPC.provider({
-    mnemonic: 'tokenstars',
-    network_id: 315
+let w3: W3 = new W3(Ganache.provider({
+    network_id: 314,
+    accounts: [{ balance: '0xD3C21BCECCEDA1000000', secretKey: '0x1ce01934dbcd6fd84e68faca8c6aebca346162823d20f0562135fe3e4f275bce'}]    
 }));
 
+// let address = W3.EthUtils.bufferToHex(W3.EthUtils.privateToAddress(new Buffer('1ce01934dbcd6fd84e68faca8c6aebca346162823d20f0562135fe3e4f275bce', 'hex')));
+// console.log('CALCULATED ADDRESS', address);
+
 W3.Default = w3;
+let testrpc = new TestRPC(w3);
+
 let activeAccount = '0xc08d5fe987c2338d28fd020b771a423b68e665e4';
 
 let storage: Storage;
 
 let deployParams = W3.TC.txParamsDefaultDeploy(activeAccount);
 let sendParams = W3.TC.txParamsDefaultSend(activeAccount);
+
+let auctionAddress: string;
 
 beforeAll(async () => {
 
@@ -49,14 +56,11 @@ beforeEach(async () => {
 
 it('Could deploy auction factory and create auction', async () => {
     expect(true).toBe(true);
-    let factory = new AuctionFactory(deployParams, undefined, w3);
-    await factory.instance;
+    let factory = await AuctionFactory.New(deployParams, w3);
     console.log('FACTORY ADDRESS', await factory.address);
 
-    // Rinkeby 0x23d70bd7dee1abe24f5f71b73e3d46fdbad43dd5
-
-    let token = new AceToken(deployParams, undefined, w3);
-    await token.instance;
+    let token = await AceToken.New(deployParams, undefined, w3);
+    
     let tokenAddress = await token.address;
     console.log('TOKEN ADDRESS', tokenAddress);
 
@@ -69,16 +73,62 @@ it('Could deploy auction factory and create auction', async () => {
 
     console.log('ARGS', args);
 
-    let newAuctionAddress = args.addr;
+    auctionAddress = args.addr;
 
-    let auction = new Auction(newAuctionAddress, undefined, w3);
+    let auction = await Auction.At(auctionAddress, w3);
 
     let actualAddress = await auction.address;
 
-    // Rinkeby 0x5c7329b96900f07e154083af96a97788fe906311
-
-    expect(actualAddress).toBe(newAuctionAddress);
-
+    expect(actualAddress).toBe(auctionAddress);
     expect(await auction.item()).toBe('test_item');
-
 })
+
+
+it('Could send manage bid', async () => {
+    let auction = await Auction.At(auctionAddress, w3);
+
+    console.log('SEND PARAMS', deployParams);
+    let tx = await auction.managedBid(42, 123, deployParams);
+
+    console.log('MANAGED BID TX', tx);
+
+    let bidder = (await auction.highestManagedBidder()).toNumber();
+    expect(bidder).toBe(42);
+
+    let highestBid = (await auction.highestBid()).toNumber();
+    expect(highestBid).toBe(123);
+})
+
+
+it('Could extend end time', async () => {
+    if (await w3.isTestRPC) {
+        let auction = await Auction.At(auctionAddress, w3);
+
+        let end = (new Date(2017, 12, 25).getTime() / 1000);
+
+        let contractEnd = (await auction.endSeconds()).toNumber();
+
+        expect(contractEnd).toBe(end);
+
+        let minutesLeft = 10;
+
+        await testrpc.increaseTimeTo(end - 60 * minutesLeft);
+
+        let tx = await auction.managedBid(43, 124, deployParams);
+
+        let newContractEnd = (await auction.endSeconds()).toNumber();
+
+        expect(newContractEnd).toBeGreaterThan(contractEnd);
+        expect(newContractEnd - contractEnd).toBe(60 * (30 - minutesLeft));
+
+        console.log('NEW-OLD END', newContractEnd - contractEnd);
+
+        let bidder = (await auction.highestManagedBidder()).toNumber();
+        expect(bidder).toBe(43);
+
+        let highestBid = (await auction.highestBid()).toNumber();
+        expect(highestBid).toBe(124);
+    }
+})
+
+

@@ -18,7 +18,20 @@ export class Auction extends SoltsiceContract {
         return hash;
     }
 
-    constructor(
+    // tslint:disable-next-line:max-line-length
+    static async New(deploymentParams: W3.TC.TxParams, ctorParams?: {_owner: string, _wallet: string, _token: string, _endSeconds: BigNumber | number, _weiPerToken: BigNumber | number, _maxTokens: BigNumber | number, _item: string, _allowManagedBids: boolean}, w3?: W3, link?: SoltsiceContract[]): Promise<Auction> {
+        let contract = new Auction(deploymentParams, ctorParams, w3, link);
+        await contract._instancePromise;
+        return contract;
+    }
+
+    static async At(address: string | object, w3?: W3): Promise<Auction> {
+        let contract = new Auction(address, undefined, w3, undefined);
+        await contract._instancePromise;
+        return contract;
+    }
+
+    protected constructor(
         deploymentParams: string | W3.TC.TxParams | object,
         ctorParams?: {_owner: string, _wallet: string, _token: string, _endSeconds: BigNumber | number, _weiPerToken: BigNumber | number, _maxTokens: BigNumber | number, _item: string, _allowManagedBids: boolean},
         w3?: W3,
@@ -43,11 +56,9 @@ export class Auction extends SoltsiceContract {
         // tslint:disable-next-line:variable-name
         ( txParams?: W3.TC.TxParams): Promise<W3.TC.TransactionResult> => {
             return new Promise((resolve, reject) => {
-                this._instance.then((inst) => {
-                    inst.withdraw( txParams || this._sendParams)
-                        .then((res) => resolve(res))
-                        .catch((err) => reject(err));
-                });
+                this._instance.withdraw( txParams || this._sendParams)
+                    .then((res) => resolve(res))
+                    .catch((err) => reject(err));
             });
         },
         {
@@ -55,11 +66,9 @@ export class Auction extends SoltsiceContract {
             // tslint:disable-next-line:variable-name
             sendTransaction: ( txParams?: W3.TC.TxParams): Promise<string> => {
                 return new Promise((resolve, reject) => {
-                    this._instance.then((inst) => {
-                        inst.withdraw.sendTransaction( txParams || this._sendParams)
-                            .then((res) => resolve(res))
-                            .catch((err) => reject(err));
-                    });
+                    this._instance.withdraw.sendTransaction( txParams || this._sendParams)
+                        .then((res) => resolve(res))
+                        .catch((err) => reject(err));
                 });
             }
         },
@@ -68,9 +77,7 @@ export class Auction extends SoltsiceContract {
             // tslint:disable-next-line:variable-name
             data: (): Promise<string> => {
                 return new Promise((resolve, reject) => {
-                    this._instance.then((inst) => {
-                        resolve(inst.withdraw.request().params[0].data);
-                    });
+                    resolve(this._instance.withdraw.request().params[0].data);
                 });
             }
         },
@@ -79,9 +86,7 @@ export class Auction extends SoltsiceContract {
             // tslint:disable-next-line:variable-name
             estimateGas: (): Promise<number> => {
                 return new Promise((resolve, reject) => {
-                    this._instance.then((inst) => {
-                        inst.withdraw.estimateGas().then((g) => resolve(g));
-                    });
+                    this._instance.withdraw.estimateGas().then((g) => resolve(g));
                 });
             }
         });
@@ -90,12 +95,10 @@ export class Auction extends SoltsiceContract {
     // tslint:disable-next-line:variable-name
     public canceled( txParams?: W3.TC.TxParams): Promise<boolean> {
         return new Promise((resolve, reject) => {
-            this._instance.then((inst) => {
-                inst.canceled
-                    .call( txParams || this._sendParams)
-                    .then((res) => resolve(res))
-                    .catch((err) => reject(err));
-            });
+            this._instance.canceled
+                .call( txParams || this._sendParams)
+                .then((res) => resolve(res))
+                .catch((err) => reject(err));
         });
     }
     
@@ -105,11 +108,9 @@ export class Auction extends SoltsiceContract {
         // tslint:disable-next-line:variable-name
         (tokens: BigNumber | number, txParams?: W3.TC.TxParams): Promise<W3.TC.TransactionResult> => {
             return new Promise((resolve, reject) => {
-                this._instance.then((inst) => {
-                    inst.bid(tokens, txParams || this._sendParams)
-                        .then((res) => resolve(res))
-                        .catch((err) => reject(err));
-                });
+                this._instance.bid(tokens, txParams || this._sendParams)
+                    .then((res) => resolve(res))
+                    .catch((err) => reject(err));
             });
         },
         {
@@ -117,11 +118,9 @@ export class Auction extends SoltsiceContract {
             // tslint:disable-next-line:variable-name
             sendTransaction: (tokens: BigNumber | number, txParams?: W3.TC.TxParams): Promise<string> => {
                 return new Promise((resolve, reject) => {
-                    this._instance.then((inst) => {
-                        inst.bid.sendTransaction(tokens, txParams || this._sendParams)
-                            .then((res) => resolve(res))
-                            .catch((err) => reject(err));
-                    });
+                    this._instance.bid.sendTransaction(tokens, txParams || this._sendParams)
+                        .then((res) => resolve(res))
+                        .catch((err) => reject(err));
                 });
             }
         },
@@ -130,9 +129,7 @@ export class Auction extends SoltsiceContract {
             // tslint:disable-next-line:variable-name
             data: (tokens: BigNumber | number): Promise<string> => {
                 return new Promise((resolve, reject) => {
-                    this._instance.then((inst) => {
-                        resolve(inst.bid.request(tokens).params[0].data);
-                    });
+                    resolve(this._instance.bid.request(tokens).params[0].data);
                 });
             }
         },
@@ -141,9 +138,7 @@ export class Auction extends SoltsiceContract {
             // tslint:disable-next-line:variable-name
             estimateGas: (tokens: BigNumber | number): Promise<number> => {
                 return new Promise((resolve, reject) => {
-                    this._instance.then((inst) => {
-                        inst.bid.estimateGas(tokens).then((g) => resolve(g));
-                    });
+                    this._instance.bid.estimateGas(tokens).then((g) => resolve(g));
                 });
             }
         });
@@ -152,12 +147,10 @@ export class Auction extends SoltsiceContract {
     // tslint:disable-next-line:variable-name
     public endSeconds( txParams?: W3.TC.TxParams): Promise<BigNumber> {
         return new Promise((resolve, reject) => {
-            this._instance.then((inst) => {
-                inst.endSeconds
-                    .call( txParams || this._sendParams)
-                    .then((res) => resolve(res))
-                    .catch((err) => reject(err));
-            });
+            this._instance.endSeconds
+                .call( txParams || this._sendParams)
+                .then((res) => resolve(res))
+                .catch((err) => reject(err));
         });
     }
     
@@ -165,12 +158,10 @@ export class Auction extends SoltsiceContract {
     // tslint:disable-next-line:variable-name
     public wallet( txParams?: W3.TC.TxParams): Promise<string> {
         return new Promise((resolve, reject) => {
-            this._instance.then((inst) => {
-                inst.wallet
-                    .call( txParams || this._sendParams)
-                    .then((res) => resolve(res))
-                    .catch((err) => reject(err));
-            });
+            this._instance.wallet
+                .call( txParams || this._sendParams)
+                .then((res) => resolve(res))
+                .catch((err) => reject(err));
         });
     }
     
@@ -178,12 +169,10 @@ export class Auction extends SoltsiceContract {
     // tslint:disable-next-line:variable-name
     public tokenBalances(_0: string, txParams?: W3.TC.TxParams): Promise<BigNumber> {
         return new Promise((resolve, reject) => {
-            this._instance.then((inst) => {
-                inst.tokenBalances
-                    .call(_0, txParams || this._sendParams)
-                    .then((res) => resolve(res))
-                    .catch((err) => reject(err));
-            });
+            this._instance.tokenBalances
+                .call(_0, txParams || this._sendParams)
+                .then((res) => resolve(res))
+                .catch((err) => reject(err));
         });
     }
     
@@ -193,11 +182,9 @@ export class Auction extends SoltsiceContract {
         // tslint:disable-next-line:variable-name
         (_managedBidder: BigNumber | number, _managedBid: BigNumber | number, txParams?: W3.TC.TxParams): Promise<W3.TC.TransactionResult> => {
             return new Promise((resolve, reject) => {
-                this._instance.then((inst) => {
-                    inst.managedBid(_managedBidder, _managedBid, txParams || this._sendParams)
-                        .then((res) => resolve(res))
-                        .catch((err) => reject(err));
-                });
+                this._instance.managedBid(_managedBidder, _managedBid, txParams || this._sendParams)
+                    .then((res) => resolve(res))
+                    .catch((err) => reject(err));
             });
         },
         {
@@ -205,11 +192,9 @@ export class Auction extends SoltsiceContract {
             // tslint:disable-next-line:variable-name
             sendTransaction: (_managedBidder: BigNumber | number, _managedBid: BigNumber | number, txParams?: W3.TC.TxParams): Promise<string> => {
                 return new Promise((resolve, reject) => {
-                    this._instance.then((inst) => {
-                        inst.managedBid.sendTransaction(_managedBidder, _managedBid, txParams || this._sendParams)
-                            .then((res) => resolve(res))
-                            .catch((err) => reject(err));
-                    });
+                    this._instance.managedBid.sendTransaction(_managedBidder, _managedBid, txParams || this._sendParams)
+                        .then((res) => resolve(res))
+                        .catch((err) => reject(err));
                 });
             }
         },
@@ -218,9 +203,7 @@ export class Auction extends SoltsiceContract {
             // tslint:disable-next-line:variable-name
             data: (_managedBidder: BigNumber | number, _managedBid: BigNumber | number): Promise<string> => {
                 return new Promise((resolve, reject) => {
-                    this._instance.then((inst) => {
-                        resolve(inst.managedBid.request(_managedBidder, _managedBid).params[0].data);
-                    });
+                    resolve(this._instance.managedBid.request(_managedBidder, _managedBid).params[0].data);
                 });
             }
         },
@@ -229,9 +212,7 @@ export class Auction extends SoltsiceContract {
             // tslint:disable-next-line:variable-name
             estimateGas: (_managedBidder: BigNumber | number, _managedBid: BigNumber | number): Promise<number> => {
                 return new Promise((resolve, reject) => {
-                    this._instance.then((inst) => {
-                        inst.managedBid.estimateGas(_managedBidder, _managedBid).then((g) => resolve(g));
-                    });
+                    this._instance.managedBid.estimateGas(_managedBidder, _managedBid).then((g) => resolve(g));
                 });
             }
         });
@@ -240,12 +221,10 @@ export class Auction extends SoltsiceContract {
     // tslint:disable-next-line:variable-name
     public owner( txParams?: W3.TC.TxParams): Promise<string> {
         return new Promise((resolve, reject) => {
-            this._instance.then((inst) => {
-                inst.owner
-                    .call( txParams || this._sendParams)
-                    .then((res) => resolve(res))
-                    .catch((err) => reject(err));
-            });
+            this._instance.owner
+                .call( txParams || this._sendParams)
+                .then((res) => resolve(res))
+                .catch((err) => reject(err));
         });
     }
     
@@ -255,11 +234,9 @@ export class Auction extends SoltsiceContract {
         // tslint:disable-next-line:variable-name
         ( txParams?: W3.TC.TxParams): Promise<W3.TC.TransactionResult> => {
             return new Promise((resolve, reject) => {
-                this._instance.then((inst) => {
-                    inst.cancelAuction( txParams || this._sendParams)
-                        .then((res) => resolve(res))
-                        .catch((err) => reject(err));
-                });
+                this._instance.cancelAuction( txParams || this._sendParams)
+                    .then((res) => resolve(res))
+                    .catch((err) => reject(err));
             });
         },
         {
@@ -267,11 +244,9 @@ export class Auction extends SoltsiceContract {
             // tslint:disable-next-line:variable-name
             sendTransaction: ( txParams?: W3.TC.TxParams): Promise<string> => {
                 return new Promise((resolve, reject) => {
-                    this._instance.then((inst) => {
-                        inst.cancelAuction.sendTransaction( txParams || this._sendParams)
-                            .then((res) => resolve(res))
-                            .catch((err) => reject(err));
-                    });
+                    this._instance.cancelAuction.sendTransaction( txParams || this._sendParams)
+                        .then((res) => resolve(res))
+                        .catch((err) => reject(err));
                 });
             }
         },
@@ -280,9 +255,7 @@ export class Auction extends SoltsiceContract {
             // tslint:disable-next-line:variable-name
             data: (): Promise<string> => {
                 return new Promise((resolve, reject) => {
-                    this._instance.then((inst) => {
-                        resolve(inst.cancelAuction.request().params[0].data);
-                    });
+                    resolve(this._instance.cancelAuction.request().params[0].data);
                 });
             }
         },
@@ -291,9 +264,7 @@ export class Auction extends SoltsiceContract {
             // tslint:disable-next-line:variable-name
             estimateGas: (): Promise<number> => {
                 return new Promise((resolve, reject) => {
-                    this._instance.then((inst) => {
-                        inst.cancelAuction.estimateGas().then((g) => resolve(g));
-                    });
+                    this._instance.cancelAuction.estimateGas().then((g) => resolve(g));
                 });
             }
         });
@@ -302,12 +273,10 @@ export class Auction extends SoltsiceContract {
     // tslint:disable-next-line:variable-name
     public highestBidder( txParams?: W3.TC.TxParams): Promise<string> {
         return new Promise((resolve, reject) => {
-            this._instance.then((inst) => {
-                inst.highestBidder
-                    .call( txParams || this._sendParams)
-                    .then((res) => resolve(res))
-                    .catch((err) => reject(err));
-            });
+            this._instance.highestBidder
+                .call( txParams || this._sendParams)
+                .then((res) => resolve(res))
+                .catch((err) => reject(err));
         });
     }
     
@@ -315,12 +284,10 @@ export class Auction extends SoltsiceContract {
     // tslint:disable-next-line:variable-name
     public etherBalances(_0: string, txParams?: W3.TC.TxParams): Promise<BigNumber> {
         return new Promise((resolve, reject) => {
-            this._instance.then((inst) => {
-                inst.etherBalances
-                    .call(_0, txParams || this._sendParams)
-                    .then((res) => resolve(res))
-                    .catch((err) => reject(err));
-            });
+            this._instance.etherBalances
+                .call(_0, txParams || this._sendParams)
+                .then((res) => resolve(res))
+                .catch((err) => reject(err));
         });
     }
     
@@ -328,12 +295,10 @@ export class Auction extends SoltsiceContract {
     // tslint:disable-next-line:variable-name
     public highestManagedBidder( txParams?: W3.TC.TxParams): Promise<BigNumber> {
         return new Promise((resolve, reject) => {
-            this._instance.then((inst) => {
-                inst.highestManagedBidder
-                    .call( txParams || this._sendParams)
-                    .then((res) => resolve(res))
-                    .catch((err) => reject(err));
-            });
+            this._instance.highestManagedBidder
+                .call( txParams || this._sendParams)
+                .then((res) => resolve(res))
+                .catch((err) => reject(err));
         });
     }
     
@@ -343,11 +308,9 @@ export class Auction extends SoltsiceContract {
         // tslint:disable-next-line:variable-name
         (_weiPerToken: BigNumber | number, txParams?: W3.TC.TxParams): Promise<W3.TC.TransactionResult> => {
             return new Promise((resolve, reject) => {
-                this._instance.then((inst) => {
-                    inst.setWeiPerToken(_weiPerToken, txParams || this._sendParams)
-                        .then((res) => resolve(res))
-                        .catch((err) => reject(err));
-                });
+                this._instance.setWeiPerToken(_weiPerToken, txParams || this._sendParams)
+                    .then((res) => resolve(res))
+                    .catch((err) => reject(err));
             });
         },
         {
@@ -355,11 +318,9 @@ export class Auction extends SoltsiceContract {
             // tslint:disable-next-line:variable-name
             sendTransaction: (_weiPerToken: BigNumber | number, txParams?: W3.TC.TxParams): Promise<string> => {
                 return new Promise((resolve, reject) => {
-                    this._instance.then((inst) => {
-                        inst.setWeiPerToken.sendTransaction(_weiPerToken, txParams || this._sendParams)
-                            .then((res) => resolve(res))
-                            .catch((err) => reject(err));
-                    });
+                    this._instance.setWeiPerToken.sendTransaction(_weiPerToken, txParams || this._sendParams)
+                        .then((res) => resolve(res))
+                        .catch((err) => reject(err));
                 });
             }
         },
@@ -368,9 +329,7 @@ export class Auction extends SoltsiceContract {
             // tslint:disable-next-line:variable-name
             data: (_weiPerToken: BigNumber | number): Promise<string> => {
                 return new Promise((resolve, reject) => {
-                    this._instance.then((inst) => {
-                        resolve(inst.setWeiPerToken.request(_weiPerToken).params[0].data);
-                    });
+                    resolve(this._instance.setWeiPerToken.request(_weiPerToken).params[0].data);
                 });
             }
         },
@@ -379,9 +338,7 @@ export class Auction extends SoltsiceContract {
             // tslint:disable-next-line:variable-name
             estimateGas: (_weiPerToken: BigNumber | number): Promise<number> => {
                 return new Promise((resolve, reject) => {
-                    this._instance.then((inst) => {
-                        inst.setWeiPerToken.estimateGas(_weiPerToken).then((g) => resolve(g));
-                    });
+                    this._instance.setWeiPerToken.estimateGas(_weiPerToken).then((g) => resolve(g));
                 });
             }
         });
@@ -390,12 +347,10 @@ export class Auction extends SoltsiceContract {
     // tslint:disable-next-line:variable-name
     public finalized( txParams?: W3.TC.TxParams): Promise<boolean> {
         return new Promise((resolve, reject) => {
-            this._instance.then((inst) => {
-                inst.finalized
-                    .call( txParams || this._sendParams)
-                    .then((res) => resolve(res))
-                    .catch((err) => reject(err));
-            });
+            this._instance.finalized
+                .call( txParams || this._sendParams)
+                .then((res) => resolve(res))
+                .catch((err) => reject(err));
         });
     }
     
@@ -403,12 +358,10 @@ export class Auction extends SoltsiceContract {
     // tslint:disable-next-line:variable-name
     public highestBid( txParams?: W3.TC.TxParams): Promise<BigNumber> {
         return new Promise((resolve, reject) => {
-            this._instance.then((inst) => {
-                inst.highestBid
-                    .call( txParams || this._sendParams)
-                    .then((res) => resolve(res))
-                    .catch((err) => reject(err));
-            });
+            this._instance.highestBid
+                .call( txParams || this._sendParams)
+                .then((res) => resolve(res))
+                .catch((err) => reject(err));
         });
     }
     
@@ -416,12 +369,10 @@ export class Auction extends SoltsiceContract {
     // tslint:disable-next-line:variable-name
     public item( txParams?: W3.TC.TxParams): Promise<string> {
         return new Promise((resolve, reject) => {
-            this._instance.then((inst) => {
-                inst.item
-                    .call( txParams || this._sendParams)
-                    .then((res) => resolve(res))
-                    .catch((err) => reject(err));
-            });
+            this._instance.item
+                .call( txParams || this._sendParams)
+                .then((res) => resolve(res))
+                .catch((err) => reject(err));
         });
     }
     
@@ -431,11 +382,9 @@ export class Auction extends SoltsiceContract {
         // tslint:disable-next-line:variable-name
         ( txParams?: W3.TC.TxParams): Promise<W3.TC.TransactionResult> => {
             return new Promise((resolve, reject) => {
-                this._instance.then((inst) => {
-                    inst.finalizeAuction( txParams || this._sendParams)
-                        .then((res) => resolve(res))
-                        .catch((err) => reject(err));
-                });
+                this._instance.finalizeAuction( txParams || this._sendParams)
+                    .then((res) => resolve(res))
+                    .catch((err) => reject(err));
             });
         },
         {
@@ -443,11 +392,9 @@ export class Auction extends SoltsiceContract {
             // tslint:disable-next-line:variable-name
             sendTransaction: ( txParams?: W3.TC.TxParams): Promise<string> => {
                 return new Promise((resolve, reject) => {
-                    this._instance.then((inst) => {
-                        inst.finalizeAuction.sendTransaction( txParams || this._sendParams)
-                            .then((res) => resolve(res))
-                            .catch((err) => reject(err));
-                    });
+                    this._instance.finalizeAuction.sendTransaction( txParams || this._sendParams)
+                        .then((res) => resolve(res))
+                        .catch((err) => reject(err));
                 });
             }
         },
@@ -456,9 +403,7 @@ export class Auction extends SoltsiceContract {
             // tslint:disable-next-line:variable-name
             data: (): Promise<string> => {
                 return new Promise((resolve, reject) => {
-                    this._instance.then((inst) => {
-                        resolve(inst.finalizeAuction.request().params[0].data);
-                    });
+                    resolve(this._instance.finalizeAuction.request().params[0].data);
                 });
             }
         },
@@ -467,9 +412,7 @@ export class Auction extends SoltsiceContract {
             // tslint:disable-next-line:variable-name
             estimateGas: (): Promise<number> => {
                 return new Promise((resolve, reject) => {
-                    this._instance.then((inst) => {
-                        inst.finalizeAuction.estimateGas().then((g) => resolve(g));
-                    });
+                    this._instance.finalizeAuction.estimateGas().then((g) => resolve(g));
                 });
             }
         });
@@ -478,12 +421,10 @@ export class Auction extends SoltsiceContract {
     // tslint:disable-next-line:variable-name
     public token( txParams?: W3.TC.TxParams): Promise<string> {
         return new Promise((resolve, reject) => {
-            this._instance.then((inst) => {
-                inst.token
-                    .call( txParams || this._sendParams)
-                    .then((res) => resolve(res))
-                    .catch((err) => reject(err));
-            });
+            this._instance.token
+                .call( txParams || this._sendParams)
+                .then((res) => resolve(res))
+                .catch((err) => reject(err));
         });
     }
     

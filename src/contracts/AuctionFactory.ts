@@ -18,7 +18,20 @@ export class AuctionFactory extends SoltsiceContract {
         return hash;
     }
 
-    constructor(
+    // tslint:disable-next-line:max-line-length
+    static async New(deploymentParams: W3.TC.TxParams, ctorParams?: {}, w3?: W3, link?: SoltsiceContract[]): Promise<AuctionFactory> {
+        let contract = new AuctionFactory(deploymentParams, ctorParams, w3, link);
+        await contract._instancePromise;
+        return contract;
+    }
+
+    static async At(address: string | object, w3?: W3): Promise<AuctionFactory> {
+        let contract = new AuctionFactory(address, undefined, w3, undefined);
+        await contract._instancePromise;
+        return contract;
+    }
+
+    protected constructor(
         deploymentParams: string | W3.TC.TxParams | object,
         ctorParams?: {},
         w3?: W3,
@@ -43,11 +56,9 @@ export class AuctionFactory extends SoltsiceContract {
         // tslint:disable-next-line:variable-name
         (_owner: string, _wallet: string, _token: string, _endSeconds: BigNumber | number, _weiPerToken: BigNumber | number, _maxTokens: BigNumber | number, _item: string, _allowManagedBids: boolean, txParams?: W3.TC.TxParams): Promise<W3.TC.TransactionResult> => {
             return new Promise((resolve, reject) => {
-                this._instance.then((inst) => {
-                    inst.produceForOwnerCustomToken(_owner, _wallet, _token, _endSeconds, _weiPerToken, _maxTokens, _item, _allowManagedBids, txParams || this._sendParams)
-                        .then((res) => resolve(res))
-                        .catch((err) => reject(err));
-                });
+                this._instance.produceForOwnerCustomToken(_owner, _wallet, _token, _endSeconds, _weiPerToken, _maxTokens, _item, _allowManagedBids, txParams || this._sendParams)
+                    .then((res) => resolve(res))
+                    .catch((err) => reject(err));
             });
         },
         {
@@ -55,11 +66,9 @@ export class AuctionFactory extends SoltsiceContract {
             // tslint:disable-next-line:variable-name
             sendTransaction: (_owner: string, _wallet: string, _token: string, _endSeconds: BigNumber | number, _weiPerToken: BigNumber | number, _maxTokens: BigNumber | number, _item: string, _allowManagedBids: boolean, txParams?: W3.TC.TxParams): Promise<string> => {
                 return new Promise((resolve, reject) => {
-                    this._instance.then((inst) => {
-                        inst.produceForOwnerCustomToken.sendTransaction(_owner, _wallet, _token, _endSeconds, _weiPerToken, _maxTokens, _item, _allowManagedBids, txParams || this._sendParams)
-                            .then((res) => resolve(res))
-                            .catch((err) => reject(err));
-                    });
+                    this._instance.produceForOwnerCustomToken.sendTransaction(_owner, _wallet, _token, _endSeconds, _weiPerToken, _maxTokens, _item, _allowManagedBids, txParams || this._sendParams)
+                        .then((res) => resolve(res))
+                        .catch((err) => reject(err));
                 });
             }
         },
@@ -68,9 +77,7 @@ export class AuctionFactory extends SoltsiceContract {
             // tslint:disable-next-line:variable-name
             data: (_owner: string, _wallet: string, _token: string, _endSeconds: BigNumber | number, _weiPerToken: BigNumber | number, _maxTokens: BigNumber | number, _item: string, _allowManagedBids: boolean): Promise<string> => {
                 return new Promise((resolve, reject) => {
-                    this._instance.then((inst) => {
-                        resolve(inst.produceForOwnerCustomToken.request(_owner, _wallet, _token, _endSeconds, _weiPerToken, _maxTokens, _item, _allowManagedBids).params[0].data);
-                    });
+                    resolve(this._instance.produceForOwnerCustomToken.request(_owner, _wallet, _token, _endSeconds, _weiPerToken, _maxTokens, _item, _allowManagedBids).params[0].data);
                 });
             }
         },
@@ -79,9 +86,7 @@ export class AuctionFactory extends SoltsiceContract {
             // tslint:disable-next-line:variable-name
             estimateGas: (_owner: string, _wallet: string, _token: string, _endSeconds: BigNumber | number, _weiPerToken: BigNumber | number, _maxTokens: BigNumber | number, _item: string, _allowManagedBids: boolean): Promise<number> => {
                 return new Promise((resolve, reject) => {
-                    this._instance.then((inst) => {
-                        inst.produceForOwnerCustomToken.estimateGas(_owner, _wallet, _token, _endSeconds, _weiPerToken, _maxTokens, _item, _allowManagedBids).then((g) => resolve(g));
-                    });
+                    this._instance.produceForOwnerCustomToken.estimateGas(_owner, _wallet, _token, _endSeconds, _weiPerToken, _maxTokens, _item, _allowManagedBids).then((g) => resolve(g));
                 });
             }
         });
@@ -92,11 +97,9 @@ export class AuctionFactory extends SoltsiceContract {
         // tslint:disable-next-line:variable-name
         (_owner: string, _wallet: string, _endSeconds: BigNumber | number, _weiPerToken: BigNumber | number, _maxTokens: BigNumber | number, _item: string, _allowManagedBids: boolean, txParams?: W3.TC.TxParams): Promise<W3.TC.TransactionResult> => {
             return new Promise((resolve, reject) => {
-                this._instance.then((inst) => {
-                    inst.produceForOwner(_owner, _wallet, _endSeconds, _weiPerToken, _maxTokens, _item, _allowManagedBids, txParams || this._sendParams)
-                        .then((res) => resolve(res))
-                        .catch((err) => reject(err));
-                });
+                this._instance.produceForOwner(_owner, _wallet, _endSeconds, _weiPerToken, _maxTokens, _item, _allowManagedBids, txParams || this._sendParams)
+                    .then((res) => resolve(res))
+                    .catch((err) => reject(err));
             });
         },
         {
@@ -104,11 +107,9 @@ export class AuctionFactory extends SoltsiceContract {
             // tslint:disable-next-line:variable-name
             sendTransaction: (_owner: string, _wallet: string, _endSeconds: BigNumber | number, _weiPerToken: BigNumber | number, _maxTokens: BigNumber | number, _item: string, _allowManagedBids: boolean, txParams?: W3.TC.TxParams): Promise<string> => {
                 return new Promise((resolve, reject) => {
-                    this._instance.then((inst) => {
-                        inst.produceForOwner.sendTransaction(_owner, _wallet, _endSeconds, _weiPerToken, _maxTokens, _item, _allowManagedBids, txParams || this._sendParams)
-                            .then((res) => resolve(res))
-                            .catch((err) => reject(err));
-                    });
+                    this._instance.produceForOwner.sendTransaction(_owner, _wallet, _endSeconds, _weiPerToken, _maxTokens, _item, _allowManagedBids, txParams || this._sendParams)
+                        .then((res) => resolve(res))
+                        .catch((err) => reject(err));
                 });
             }
         },
@@ -117,9 +118,7 @@ export class AuctionFactory extends SoltsiceContract {
             // tslint:disable-next-line:variable-name
             data: (_owner: string, _wallet: string, _endSeconds: BigNumber | number, _weiPerToken: BigNumber | number, _maxTokens: BigNumber | number, _item: string, _allowManagedBids: boolean): Promise<string> => {
                 return new Promise((resolve, reject) => {
-                    this._instance.then((inst) => {
-                        resolve(inst.produceForOwner.request(_owner, _wallet, _endSeconds, _weiPerToken, _maxTokens, _item, _allowManagedBids).params[0].data);
-                    });
+                    resolve(this._instance.produceForOwner.request(_owner, _wallet, _endSeconds, _weiPerToken, _maxTokens, _item, _allowManagedBids).params[0].data);
                 });
             }
         },
@@ -128,9 +127,7 @@ export class AuctionFactory extends SoltsiceContract {
             // tslint:disable-next-line:variable-name
             estimateGas: (_owner: string, _wallet: string, _endSeconds: BigNumber | number, _weiPerToken: BigNumber | number, _maxTokens: BigNumber | number, _item: string, _allowManagedBids: boolean): Promise<number> => {
                 return new Promise((resolve, reject) => {
-                    this._instance.then((inst) => {
-                        inst.produceForOwner.estimateGas(_owner, _wallet, _endSeconds, _weiPerToken, _maxTokens, _item, _allowManagedBids).then((g) => resolve(g));
-                    });
+                    this._instance.produceForOwner.estimateGas(_owner, _wallet, _endSeconds, _weiPerToken, _maxTokens, _item, _allowManagedBids).then((g) => resolve(g));
                 });
             }
         });
@@ -141,11 +138,9 @@ export class AuctionFactory extends SoltsiceContract {
         // tslint:disable-next-line:variable-name
         (_wallet: string, _endSeconds: BigNumber | number, _weiPerToken: BigNumber | number, _maxTokens: BigNumber | number, _item: string, _allowManagedBids: boolean, txParams?: W3.TC.TxParams): Promise<W3.TC.TransactionResult> => {
             return new Promise((resolve, reject) => {
-                this._instance.then((inst) => {
-                    inst.produce(_wallet, _endSeconds, _weiPerToken, _maxTokens, _item, _allowManagedBids, txParams || this._sendParams)
-                        .then((res) => resolve(res))
-                        .catch((err) => reject(err));
-                });
+                this._instance.produce(_wallet, _endSeconds, _weiPerToken, _maxTokens, _item, _allowManagedBids, txParams || this._sendParams)
+                    .then((res) => resolve(res))
+                    .catch((err) => reject(err));
             });
         },
         {
@@ -153,11 +148,9 @@ export class AuctionFactory extends SoltsiceContract {
             // tslint:disable-next-line:variable-name
             sendTransaction: (_wallet: string, _endSeconds: BigNumber | number, _weiPerToken: BigNumber | number, _maxTokens: BigNumber | number, _item: string, _allowManagedBids: boolean, txParams?: W3.TC.TxParams): Promise<string> => {
                 return new Promise((resolve, reject) => {
-                    this._instance.then((inst) => {
-                        inst.produce.sendTransaction(_wallet, _endSeconds, _weiPerToken, _maxTokens, _item, _allowManagedBids, txParams || this._sendParams)
-                            .then((res) => resolve(res))
-                            .catch((err) => reject(err));
-                    });
+                    this._instance.produce.sendTransaction(_wallet, _endSeconds, _weiPerToken, _maxTokens, _item, _allowManagedBids, txParams || this._sendParams)
+                        .then((res) => resolve(res))
+                        .catch((err) => reject(err));
                 });
             }
         },
@@ -166,9 +159,7 @@ export class AuctionFactory extends SoltsiceContract {
             // tslint:disable-next-line:variable-name
             data: (_wallet: string, _endSeconds: BigNumber | number, _weiPerToken: BigNumber | number, _maxTokens: BigNumber | number, _item: string, _allowManagedBids: boolean): Promise<string> => {
                 return new Promise((resolve, reject) => {
-                    this._instance.then((inst) => {
-                        resolve(inst.produce.request(_wallet, _endSeconds, _weiPerToken, _maxTokens, _item, _allowManagedBids).params[0].data);
-                    });
+                    resolve(this._instance.produce.request(_wallet, _endSeconds, _weiPerToken, _maxTokens, _item, _allowManagedBids).params[0].data);
                 });
             }
         },
@@ -177,9 +168,7 @@ export class AuctionFactory extends SoltsiceContract {
             // tslint:disable-next-line:variable-name
             estimateGas: (_wallet: string, _endSeconds: BigNumber | number, _weiPerToken: BigNumber | number, _maxTokens: BigNumber | number, _item: string, _allowManagedBids: boolean): Promise<number> => {
                 return new Promise((resolve, reject) => {
-                    this._instance.then((inst) => {
-                        inst.produce.estimateGas(_wallet, _endSeconds, _weiPerToken, _maxTokens, _item, _allowManagedBids).then((g) => resolve(g));
-                    });
+                    this._instance.produce.estimateGas(_wallet, _endSeconds, _weiPerToken, _maxTokens, _item, _allowManagedBids).then((g) => resolve(g));
                 });
             }
         });
