@@ -17,8 +17,9 @@ contract Auction {
     uint256 public endSeconds;
 
     string public item;
+    uint256 public minPrice;
 
-    bool public canceled;
+    bool public cancelled;
     bool public finalized;
 
     uint256 public highestBid;
@@ -37,8 +38,11 @@ contract Auction {
     event NewHighestBidder(address indexed bidder, uint64 indexed managedBidder, uint256 indexed bid);
     event Withdrawal(address indexed withdrawer, uint256 indexed etherAmount, uint256 indexed tokensAmount);
     event Finalized(address indexed bidder, uint64 indexed managedBidder, uint256 indexed amount);
+    event FinalizedTokenTransfer(uint256 indexed tokensAmount);
+    event FinalizedEtherTransfer(uint256 indexed etherAmount);
+
     event ExtendedEndTime(uint256 indexed newEndtime);
-    event Canceled();
+    event Cancelled();
 
     modifier onlyOwner {
         require (msg.sender == owner);
@@ -60,8 +64,8 @@ contract Auction {
         _;
     }
 
-    modifier onlyNotCanceled {
-        require (!canceled);
+    modifier onlyNotCancelled {
+        require (!cancelled);
         _;
     }
 
@@ -71,9 +75,17 @@ contract Auction {
     }
 
 
-    function Auction(address _owner, address _wallet, address _token,
+    function Auction(
+        address _owner, 
+        address _wallet, 
+        address _token,
         uint _endSeconds, 
-        uint256 _weiPerToken, uint256 _maxTokens, string _item, bool _allowManagedBids) 
+        uint256 _weiPerToken, 
+        uint256 _maxTokens,
+        string _item,
+        uint256 _minPrice,
+        bool _allowManagedBids
+    ) 
         public 
     {
         require(_owner != address(0x0));
@@ -82,6 +94,7 @@ contract Auction {
         require (_endSeconds > now);
         require (_weiPerToken > (1e15) && _weiPerToken < 5 * (1e15));
         require(_maxTokens <= 1000);
+        require(_minPrice > 0);
         
         owner = _owner;
         wallet = _wallet;
@@ -90,6 +103,7 @@ contract Auction {
         weiPerToken = _weiPerToken;
         maxTokens = _maxTokens;
         item = _item;
+        minPrice = _minPrice;
         allowManagedBids = _allowManagedBids;
     }
 
@@ -105,7 +119,7 @@ contract Auction {
     function bid(uint256 tokens)
         payable
         onlyBeforeEnd
-        onlyNotCanceled
+        onlyNotCancelled
         onlyNotOwner
         public
         returns (bool success)
@@ -128,7 +142,7 @@ contract Auction {
         etherBalances[msg.sender] = etherBid;
         totalBid = totalBid + etherBid;
 
-        if (totalBid > highestBid) {
+        if (totalBid > highestBid && totalBid >= minPrice) {
             highestBid = totalBid;
             highestBidder = msg.sender;
             highestManagedBidder = 0;
@@ -145,13 +159,13 @@ contract Auction {
 
     function managedBid(uint64 _managedBidder, uint256 _managedBid)
         onlyBeforeEnd
-        onlyNotCanceled
+        onlyNotCancelled
         onlyOwner
         onlyAllowedManagedBids
         public
         returns (bool success)
     {
-        if (_managedBid > highestBid) {
+        if (_managedBid > highestBid && _managedBid >= minPrice) {
             highestBid = _managedBid;
             highestBidder = address(0);
             highestManagedBidder = _managedBidder;
@@ -167,7 +181,7 @@ contract Auction {
 
     function setWeiPerToken(uint256 _weiPerToken)
         onlyBeforeEnd
-        onlyNotCanceled
+        onlyNotCancelled
         onlyOwner
         public
     {
@@ -181,7 +195,7 @@ contract Auction {
     {
         // anyone could withdraw at any time except the highest bidder
         // if canceled, the highest bidder could withdraw as well
-        require((msg.sender != highestBidder) || canceled);
+        require((msg.sender != highestBidder) || cancelled);
 
         uint256 tokenBid = tokenBalances[msg.sender];
         if (tokenBid > 0) {
@@ -203,9 +217,9 @@ contract Auction {
     }
 
 
-    function finalizeAuction()
+    function finalize()
         onlyOwner
-        onlyNotCanceled
+        onlyNotCancelled
         onlyAfterEnd
         public
         returns (bool)
@@ -217,12 +231,14 @@ contract Auction {
             if (tokenBid > 0) {
                 tokenBalances[highestBidder] = 0;
                 require(token.transfer(wallet, tokenBid));
+                FinalizedTokenTransfer(tokenBid);
             }
 
             uint256 etherBid = etherBalances[highestBidder];
             if (etherBid > 0) {
                 etherBalances[highestBidder] = 0;
                 require(wallet.send(etherBid));
+                FinalizedEtherTransfer(etherBid);
             }
 
             require(tokenBid > 0 || etherBid > 0);
@@ -238,15 +254,15 @@ contract Auction {
     }
 
 
-    function cancelAuction()
+    function cancel()
         onlyOwner
         onlyBeforeEnd
-        onlyNotCanceled
+        onlyNotCancelled
         public
         returns (bool success)
     {
-        canceled = true;
-        Canceled();
+        cancelled = true;
+        Cancelled();
         return true;
     }
 }
@@ -256,35 +272,57 @@ library AuctionFactory {
 
     event AuctionProduced(address indexed addr, string _item);
 
-    function produce(address _wallet, uint _endSeconds, 
-        uint256 _weiPerToken, uint256 _maxTokens, string _item, bool _allowManagedBids)
+    function produce(
+        address _wallet, 
+        uint _endSeconds, 
+        uint256 _weiPerToken, 
+        uint256 _maxTokens, 
+        string _item, 
+        uint256 _minPrice, 
+        bool _allowManagedBids
+    )
         public
         returns (address)
     {
-        address addr = new Auction(msg.sender, _wallet, 0x06147110022B768BA8F99A8f385df11a151A9cc8, _endSeconds, _weiPerToken, _maxTokens, _item, _allowManagedBids);
+        address addr = new Auction(msg.sender, _wallet, 0x06147110022B768BA8F99A8f385df11a151A9cc8, _endSeconds, _weiPerToken, _maxTokens, _item, _minPrice, _allowManagedBids);
         AuctionProduced(addr, _item);
         return addr;
     }
 
-    function produceForOwner(address _owner, address _wallet, 
+    function produceForOwner(
+        address _owner, 
+        address _wallet, 
         uint _endSeconds, 
-        uint256 _weiPerToken, uint256 _maxTokens, string _item, bool _allowManagedBids)
+        uint256 _weiPerToken, 
+        uint256 _maxTokens, 
+        string _item, 
+        uint256 _minPrice, 
+        bool _allowManagedBids
+    )
         public
         returns (address)
     {
-        address addr = new Auction(_owner, _wallet, 0x06147110022B768BA8F99A8f385df11a151A9cc8, _endSeconds, _weiPerToken, _maxTokens, _item, _allowManagedBids);
+        address addr = new Auction(_owner, _wallet, 0x06147110022B768BA8F99A8f385df11a151A9cc8, _endSeconds, _weiPerToken, _maxTokens, _item, _minPrice, _allowManagedBids);
         AuctionProduced(addr, _item);
         return addr;
     }
 
     // token for testing
-    function produceForOwnerCustomToken(address _owner, address _wallet, address _token,
+    function produceForOwnerCustomToken(
+        address _owner, 
+        address _wallet, 
+        address _token,
         uint _endSeconds, 
-        uint256 _weiPerToken, uint256 _maxTokens, string _item, bool _allowManagedBids)
+        uint256 _weiPerToken, 
+        uint256 _maxTokens, 
+        string _item, 
+        uint256 _minPrice, 
+        bool _allowManagedBids
+    )
         public
         returns (address)
     {
-        address addr = new Auction(_owner, _wallet, _token, _endSeconds, _weiPerToken, _maxTokens, _item, _allowManagedBids);
+        address addr = new Auction(_owner, _wallet, _token, _endSeconds, _weiPerToken, _maxTokens, _item, _minPrice, _allowManagedBids);
         AuctionProduced(addr, _item);
         return addr;
     }

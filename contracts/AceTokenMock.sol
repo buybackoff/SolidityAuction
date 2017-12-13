@@ -27,7 +27,7 @@ contract AceToken is MintableToken {
     address public communityTokensHolder;
 
     // Transfer rules
-    bool public transferAllowed = false;
+    bool public transferAllowed = true;
     mapping (address=>bool) public specialAllowed;
 
     // Transfer rules events
