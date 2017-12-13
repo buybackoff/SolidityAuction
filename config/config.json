@@ -1,0 +1,6 @@
+{
+    "web3": "http://pub-node1.etherscan.io:8545",
+    "privateKey": "",
+    "networkId": 1,
+    "gasPrice": 2000000000
+}
