@@ -1,31 +1,38 @@
+//@ts-check
 import fastify from 'fastify'
 import Web3 from 'web3'
 import utils from 'ethereumjs-util'
 import Transaction from 'ethereumjs-tx'
 
-const web3 = new Web3(new Web3.providers.HttpProvider(process.env.WEB3 || 'http://localhost:8544'))
+let config = require('./config/config.json');
 
-// could paste private key right here
-const privateKeyHex = '' || process.env.PRIVATE_KEY;
-const publicKeyHex = utils.bufferToHex(utils.privateToAddress(new Buffer(privateKeyHex, 'hex')));
-if (process.env.FROM && process.env.FROM !== publicKeyHex) {
+const web3 = new Web3(new Web3.providers.HttpProvider(process.env.WEB3 || config.web3))
+const privateKeyHex = process.env.PRIVATE_KEY || config.privateKey;
+const networkId = config.networkId || 1;
+
+const gasPrice = parseInt(process.env.GAS_PRICE || config.gasPrice || 2000000000);
+if (gasPrice > 20000000000) {
+  throw new Error('Gas price is above 20 Gwei, remove this check if you know what you are doing');
+}
+
+const ownerAddress = utils.bufferToHex(utils.privateToAddress(new Buffer(privateKeyHex, 'hex')));
+if (process.env.FROM && process.env.FROM !== ownerAddress) {
   throw new Error('Provided address in process.env.FROM doesn\'t match the private key');
 }
 
-const CONSTANTS = {
-  networkId: 1,
-  from: publicKeyHex,
-  privateKey: new Buffer(privateKeyHex, 'hex'),
-  gasPrice: parseInt(process.env.GAS_PRICE || 2000000000)
-}
-const server = fastify()
+const privateKey = new Buffer(privateKeyHex, 'hex');
+
+const server = fastify();
 
 web3.eth.net.getId((err, result) => {
-  CONSTANTS.networkId = err || result
-})
+  let nid = err || result;
+  if (nid !== networkId) {
+    throw new Error('Network id in config doesn\'t match web3 running web3 network');
+  }
+});
 
 async function makeTransaction(to, value, data, gasLimit, gasPrice) {
-  const nonce = utils.bufferToHex(await web3.eth.getTransactionCount(CONSTANTS.from))
+  const nonce = utils.bufferToHex(await web3.eth.getTransactionCount(ownerAddress))
   const tx = new Transaction({
     to,
     value,
@@ -33,9 +40,9 @@ async function makeTransaction(to, value, data, gasLimit, gasPrice) {
     gasLimit,
     gasPrice,
     nonce
-  }, CONSTANTS.networkId)
+  }, networkId)
 
-  tx.sign(CONSTANTS.privateKey)
+  tx.sign(privateKey)
   const raw = `0x${tx.serialize().toString('hex')}`
 
   return new Promise((resolve, reject) => {
@@ -79,7 +86,7 @@ server.post('/contract', opts, async (request, reply) => {
   }
 
   const json = require(`./src/artifacts/${request.body.contract}`)
-  const address = request.body.at || json.networks[CONSTANTS.networkId].address
+  const address = request.body.at || json.networks[networkId].address
   const method = request.body.method
   let args = request.body.args || []
   const contract = new web3.eth.Contract(json.abi, address)
@@ -87,7 +94,8 @@ server.post('/contract', opts, async (request, reply) => {
 
   const contractMethod = contract.methods[method](...args)
 
-  contractMethod.estimateGas({ gas: 5 * 1e6 }, (error, estimateGas) => {
+  // @ts-ignore
+contractMethod.estimateGas({ gas: 5 * 1e6 }, (error, estimateGas) => {
     if (error) {
       return reply.send(error)
     }
@@ -104,7 +112,7 @@ server.post('/contract', opts, async (request, reply) => {
       })
     } else {
       const data = contractMethod.encodeABI()
-      makeTransaction(address, 0, data, estimateGas, CONSTANTS.gasPrice)
+      makeTransaction(address, 0, data, estimateGas, gasPrice)
         .then(result => reply.send({
           result,
           statusCode: 200
@@ -124,7 +132,7 @@ server.get('/events/*', async (request, reply) => {
   const commands = request.params['*'].split('/')
 
   const json = require(`./src/artifacts/Auction.json`)
-  const address = commands[0] || request.body.at || json.networks[CONSTANTS.networkId].address
+  const address = commands[0] || request.body.at || json.networks[networkId].address
   const contract = new web3.eth.Contract(json.abi, address)
 
   const fromBlock = commands.length > 1 ? +commands[1] : 0;
