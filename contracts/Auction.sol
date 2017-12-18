@@ -28,6 +28,8 @@ contract Auction {
 
     mapping(address => uint256) public etherBalances;
     mapping(address => uint256) public tokenBalances;
+    mapping(address => uint256) public tokenBalancesInEther;
+    mapping(address => uint256) public managedBids;
     
     bool allowManagedBids;
 
@@ -35,7 +37,9 @@ contract Auction {
 
     event Bid(address indexed bidder, uint256 indexed totalBidInEther, uint256 indexed tokensBid);
     event ManagedBid(uint64 indexed bidder, uint256 indexed bid);
+    event ManagedBid2(uint64 indexed bidder, uint256 indexed bid, address indexed knownManagedBidder);
     event NewHighestBidder(address indexed bidder, uint64 indexed managedBidder, uint256 indexed bid);
+    event NewHighestBidder2(address indexed bidder, uint256 indexed bid, uint256 indexed managedBid);
     event Withdrawal(address indexed withdrawer, uint256 indexed etherAmount, uint256 indexed tokensAmount);
     event Finalized(address indexed bidder, uint64 indexed managedBidder, uint256 indexed amount);
     event FinalizedTokenTransfer(uint256 indexed tokensAmount);
@@ -92,7 +96,7 @@ contract Auction {
         require(_wallet != address(0x0));
         require(_token != address(0x0));
         require (_endSeconds > now);
-        require (_weiPerToken > (1e15) && _weiPerToken < 5 * (1e15));
+        require (_weiPerToken > (1e15) && _weiPerToken < (1e16));
         require(_maxTokens <= 1000);
         require(_minPrice > 0);
         
@@ -124,23 +128,25 @@ contract Auction {
         public
         returns (bool success)
     {
-        uint256 totalBid;
+        uint256 totalBid = tokenBalancesInEther[msg.sender];
 
         if (tokens > 0) {
             // sender must approve transfer before calling this function
             require(token.transferFrom(msg.sender, this, tokens));
             // safe math is already in transferFrom
             uint256 tokenBid = tokenBalances[msg.sender] + tokens;
+            totalBid = totalBid + tokens * weiPerToken;
             require(tokenBid <= maxTokens);
-            totalBid = tokenBid * weiPerToken;
+            
             tokenBalances[msg.sender] = tokenBid;
+            tokenBalancesInEther[msg.sender] = totalBid;
         } else {
             require(msg.value > 0);
         }
 
         uint256 etherBid = etherBalances[msg.sender] + msg.value;
         etherBalances[msg.sender] = etherBid;
-        totalBid = totalBid + etherBid;
+        totalBid = totalBid + etherBid + managedBids[msg.sender];
 
         if (totalBid > highestBid && totalBid >= minPrice) {
             highestBid = totalBid;
@@ -155,7 +161,6 @@ contract Auction {
         Bid(msg.sender, totalBid, tokens);
         return true;
     }
-
 
     function managedBid(uint64 _managedBidder, uint256 _managedBid)
         onlyBeforeEnd
@@ -178,6 +183,49 @@ contract Auction {
         ManagedBid(_managedBidder, _managedBid);
         return true;
     }
+
+    function managedBid2(uint64 _managedBidder, uint256 _managedBid, address _knownManagedBidder)
+        onlyBeforeEnd
+        onlyNotCancelled
+        onlyOwner
+        onlyAllowedManagedBids
+        public
+        returns (bool success)
+    {
+        // NB: _managedBid is the total amount of all bids from backend
+        // calculated without any direct bid. It is important to calculate direct bids
+        // inside this transaction and make the _knownManagedBidder the highest
+        // to prevent this wallet to withdraw money and remain the highest
+
+        require(_knownManagedBidder != address(0));
+
+        require(_managedBid > managedBids[_knownManagedBidder]);
+        managedBids[_knownManagedBidder] = _managedBid;
+
+        uint256 direct = totalDirectBid(_knownManagedBidder);
+        uint256 totalBid = direct + _managedBid;
+        if (totalBid > highestBid && totalBid >= minPrice) {
+            highestBid = totalBid;
+            highestBidder = _knownManagedBidder;
+            highestManagedBidder = 0;
+            NewHighestBidder2(highestBidder, highestBid, _managedBid);
+            if ((endSeconds - now) < 1800) {
+                endSeconds = now + 1800;
+                ExtendedEndTime(endSeconds);
+            }
+        }
+        ManagedBid2(_managedBidder, _managedBid, _knownManagedBidder);
+        return true;
+    }
+
+    function totalDirectBid(address _address)
+        constant
+        public
+        returns (uint256 _totalBid)
+    {
+        return tokenBalancesInEther[_address] + etherBalances[_address];
+    }
+
 
     function setWeiPerToken(uint256 _weiPerToken)
         onlyBeforeEnd
@@ -216,7 +264,6 @@ contract Auction {
         return true;
     }
 
-
     function finalize()
         onlyOwner
         onlyNotCancelled
@@ -252,7 +299,6 @@ contract Auction {
         Finalized(highestBidder, highestManagedBidder, highestBid);
         return true;
     }
-
 
     function cancel()
         onlyOwner

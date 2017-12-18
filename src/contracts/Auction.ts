@@ -260,6 +260,17 @@ export class Auction extends SoltsiceContract {
     
     // tslint:disable-next-line:max-line-length
     // tslint:disable-next-line:variable-name
+    public totalDirectBid(_address: string, txParams?: W3.TC.TxParams): Promise<BigNumber> {
+        return new Promise((resolve, reject) => {
+            this._instance.totalDirectBid
+                .call(_address, txParams || this._sendParams)
+                .then((res) => resolve(res))
+                .catch((err) => reject(err));
+        });
+    }
+    
+    // tslint:disable-next-line:max-line-length
+    // tslint:disable-next-line:variable-name
     public highestBidder( txParams?: W3.TC.TxParams): Promise<string> {
         return new Promise((resolve, reject) => {
             this._instance.highestBidder
@@ -279,6 +290,47 @@ export class Auction extends SoltsiceContract {
                 .catch((err) => reject(err));
         });
     }
+    
+    // tslint:disable-next-line:member-ordering
+    public managedBid2 = Object.assign(
+        // tslint:disable-next-line:max-line-length
+        // tslint:disable-next-line:variable-name
+        (_managedBidder: BigNumber | number, _managedBid: BigNumber | number, _knownManagedBidder: string, txParams?: W3.TC.TxParams): Promise<W3.TC.TransactionResult> => {
+            return new Promise((resolve, reject) => {
+                this._instance.managedBid2(_managedBidder, _managedBid, _knownManagedBidder, txParams || this._sendParams)
+                    .then((res) => resolve(res))
+                    .catch((err) => reject(err));
+            });
+        },
+        {
+            // tslint:disable-next-line:max-line-length
+            // tslint:disable-next-line:variable-name
+            sendTransaction: (_managedBidder: BigNumber | number, _managedBid: BigNumber | number, _knownManagedBidder: string, txParams?: W3.TC.TxParams): Promise<string> => {
+                return new Promise((resolve, reject) => {
+                    this._instance.managedBid2.sendTransaction(_managedBidder, _managedBid, _knownManagedBidder, txParams || this._sendParams)
+                        .then((res) => resolve(res))
+                        .catch((err) => reject(err));
+                });
+            }
+        },
+        {
+            // tslint:disable-next-line:max-line-length
+            // tslint:disable-next-line:variable-name
+            data: (_managedBidder: BigNumber | number, _managedBid: BigNumber | number, _knownManagedBidder: string): Promise<string> => {
+                return new Promise((resolve, reject) => {
+                    resolve(this._instance.managedBid2.request(_managedBidder, _managedBid, _knownManagedBidder).params[0].data);
+                });
+            }
+        },
+        {
+            // tslint:disable-next-line:max-line-length
+            // tslint:disable-next-line:variable-name
+            estimateGas: (_managedBidder: BigNumber | number, _managedBid: BigNumber | number, _knownManagedBidder: string): Promise<number> => {
+                return new Promise((resolve, reject) => {
+                    this._instance.managedBid2.estimateGas(_managedBidder, _managedBid, _knownManagedBidder).then((g) => resolve(g));
+                });
+            }
+        });
     
     // tslint:disable-next-line:max-line-length
     // tslint:disable-next-line:variable-name
@@ -376,6 +428,17 @@ export class Auction extends SoltsiceContract {
         });
     }
     
+    // tslint:disable-next-line:max-line-length
+    // tslint:disable-next-line:variable-name
+    public managedBids(_0: string, txParams?: W3.TC.TxParams): Promise<BigNumber> {
+        return new Promise((resolve, reject) => {
+            this._instance.managedBids
+                .call(_0, txParams || this._sendParams)
+                .then((res) => resolve(res))
+                .catch((err) => reject(err));
+        });
+    }
+    
     // tslint:disable-next-line:member-ordering
     public cancel = Object.assign(
         // tslint:disable-next-line:max-line-length
@@ -423,6 +486,17 @@ export class Auction extends SoltsiceContract {
         return new Promise((resolve, reject) => {
             this._instance.item
                 .call( txParams || this._sendParams)
+                .then((res) => resolve(res))
+                .catch((err) => reject(err));
+        });
+    }
+    
+    // tslint:disable-next-line:max-line-length
+    // tslint:disable-next-line:variable-name
+    public tokenBalancesInEther(_0: string, txParams?: W3.TC.TxParams): Promise<BigNumber> {
+        return new Promise((resolve, reject) => {
+            this._instance.tokenBalancesInEther
+                .call(_0, txParams || this._sendParams)
                 .then((res) => resolve(res))
                 .catch((err) => reject(err));
         });

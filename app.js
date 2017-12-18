@@ -6,16 +6,17 @@ import Transaction from 'ethereumjs-tx'
 
 let config = require('./config/config.json');
 
-const web3 = new Web3(new Web3.providers.HttpProvider(process.env.WEB3 || config.web3))
-const privateKeyHex = process.env.PRIVATE_KEY || config.privateKey;
+const web3 = new Web3(new Web3.providers.HttpProvider(config.web3))
+const privateKeyHex = config.privateKey;
 const networkId = config.networkId || 1;
 
-const gasPrice = parseInt(process.env.GAS_PRICE || config.gasPrice || 2000000000);
+const gasPrice = parseInt(config.gasPrice || 2000000000);
 if (gasPrice > 20000000000) {
-  throw new Error('Gas price is above 20 Gwei, remove this check if you know what you are doing');
+  throw new Error('Gas price is above 20 Gwei, remove this check at the beginning of app.js if you know what you are doing (around line 15)');
 }
 
 const ownerAddress = utils.bufferToHex(utils.privateToAddress(new Buffer(privateKeyHex, 'hex')));
+console.log('OWNER', ownerAddress);
 if (process.env.FROM && process.env.FROM !== ownerAddress) {
   throw new Error('Provided address in process.env.FROM doesn\'t match the private key');
 }
@@ -32,7 +33,8 @@ web3.eth.net.getId((err, result) => {
 });
 
 async function makeTransaction(to, value, data, gasLimit, gasPrice) {
-  const nonce = utils.bufferToHex(await web3.eth.getTransactionCount(ownerAddress))
+  const nonce = utils.bufferToHex((await web3.eth.getTransactionCount(ownerAddress)))
+  console.log('NONCE', nonce);
   const tx = new Transaction({
     to,
     value,
@@ -69,6 +71,7 @@ const opts = {
 }
 
 server.post('/contract', opts, async (request, reply) => {
+  console.log('BODY', request.body);
   if (!request.body.contract) {
     return reply.send({
       error: 'Internal Server Error',
@@ -89,14 +92,16 @@ server.post('/contract', opts, async (request, reply) => {
   const address = request.body.at || json.networks[networkId].address
   const method = request.body.method
   let args = request.body.args || []
-  const contract = new web3.eth.Contract(json.abi, address)
+  console.log('ARGS', args);
 
+  const contract = new web3.eth.Contract(json.abi, address)
 
   const contractMethod = contract.methods[method](...args)
 
   // @ts-ignore
-contractMethod.estimateGas({ gas: 5 * 1e6 }, (error, estimateGas) => {
+  contractMethod.estimateGas({ gas: 5 * 1e6 }, (error, estimateGas) => {
     if (error) {
+      console.log('ERR1', error);
       return reply.send(error)
     }
 
@@ -111,17 +116,25 @@ contractMethod.estimateGas({ gas: 5 * 1e6 }, (error, estimateGas) => {
         })
       })
     } else {
-      const data = contractMethod.encodeABI()
-      makeTransaction(address, 0, data, estimateGas, gasPrice)
-        .then(result => reply.send({
-          result,
-          statusCode: 200
-        }))
-        .catch(error => reply.send({
-          error: 'Internal Server Error',
-          message: error,
-          statusCode: 500
-        }))
+      try {
+        const data = contractMethod.encodeABI()
+        makeTransaction(address, 0, data, estimateGas, gasPrice)
+          .then(result => reply.send({
+            result,
+            statusCode: 200
+          }))
+          .catch(error => {
+            console.log('ERROR', error);
+            reply.send({
+              error: 'Internal Server Error',
+              message: JSON.stringify(error),
+              statusCode: 500
+            });
+          }
+          )
+      } catch (e) {
+        console.log('ERR2', e);
+      }
     }
   })
 })

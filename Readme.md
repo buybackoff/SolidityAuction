@@ -86,6 +86,29 @@ curl --request POST \
 }
 ```
 
+### Managed bid 2
+
+* at - address of deployed auction, should be a part of a config (if deployed manually) or stored somewhere from factory calls
+* args - correspond to solidity signature: `uint64 _managedBidder, uint256 _managedBid, address _knownManagedBidder`
+* _managedBidder - intenal id of managed bidder, managed on backend
+* _managedBid - bid in Ether Wei (1e-18 unit). Could be a problem with large values, need to test. Will make a wrapper if long numbers cannot be deserialized correctly.
+* _knownManagedBidder - Ethereum address of bidder to sum direct and managed bids.
+
+```
+curl --request POST \
+  --url http://localhost:3000/contract \
+  --header 'content-type: application/json' \
+  --data '{"contract": "Auction",
+            "method": "managedBid",
+            "at": "0xHexOfAuctionAddress",
+            "args": [42, 123000000000000000000, '0x39a0951b13931b5bA8d97EfF4b3F66696aDfF16F' ]}'
+  
+{
+    "result": "0xfe42d74d7ea48402aa901d3eca295e6ffe1e17e7526b728e32db9bbab0fe1d9c",
+    "statusCode": 200
+}
+```
+
 ### SetWeiPerToken
 
 Same as above, a single parameter: `uint256 _weiPerToken` must meet the requirement: `require (_weiPerToken > (1e15) && _weiPerToken < 5 * (1e15));`

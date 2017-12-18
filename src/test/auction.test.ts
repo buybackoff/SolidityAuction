@@ -4,7 +4,7 @@ import * as Ganache from 'ganache-cli';
 import { access } from 'fs';
 
 // Replace w3 ctor to test on a real testnet, not TestRPC/ganache
-// let w3 = new W3(new W3.providers.HttpProvider('http://localhost:8544'));
+//let w3 = new W3(new W3.providers.HttpProvider('http://localhost:8544'));
 let w3: W3 = new W3(Ganache.provider({
     network_id: 314,
     accounts: [
@@ -21,7 +21,7 @@ W3.Default = w3;
 let testrpc = new TestRPC(w3);
 
 // testnet account with some ether
-let activeAccount = '0xc08d5fe987c2338d28fd020b771a423b68e665e4';
+let activeAccount = '0x39a0951b13931b5bA8d97EfF4b3F66696aDfF16F';
 
 let storage: Storage;
 
@@ -40,7 +40,7 @@ beforeAll(async () => {
 
     if (!(await w3.isTestRPC)) {
         console.log('NOT ON TESTRPC');
-        await w3.unlockAccount(activeAccount, 'Ropsten1', 150000);
+        await w3.unlockAccount(activeAccount, 'Rinkeby', 150000);
     } else {
         accounts = await w3.accounts;
         activeAccount = accounts[0];
@@ -56,7 +56,7 @@ beforeAll(async () => {
 
 beforeEach(async () => {
     // Testnets are SLOW compared to TestRPC
-    jasmine.DEFAULT_TIMEOUT_INTERVAL = 1800000;
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = 18000000;
     if ((await w3.networkId) === '1') {
         console.log('NOT ON TESTNET');
     } else {
@@ -100,7 +100,7 @@ it('Could deploy auction factory and create auction', async () => {
 it('Could send manage bid', async () => {
 
     let bid = weiPerToken;
-
+    let deployedAddress = '0x957e58ed20e8df9d2a8523d9fcdb0fcc584bb542';
     let auction = await Auction.At(auctionAddress, w3);
 
     console.log('SEND PARAMS', maxGasParams);
@@ -234,6 +234,27 @@ it('Could mint tokens and bid with them', async () => {
         // re-bid after withdraw so we could test finalization with tokens
         let tx4 = await auction.bid(maxTokens, tokenBidderParamsWithValue);
         expect(await auction.highestBidder()).toEqual(tokenBidderParamsWithValue.from);
+        
+        highestBid = await auction.highestBid();
+
+        // sum managed + direct bids
+
+        let tx5 = await auction.managedBid2(0, weiPerToken, tokenBidderParamsWithValue.from, maxGasParams);
+        expect(await auction.highestBidder()).toEqual(tokenBidderParamsWithValue.from);
+
+        let highestBid2 = await auction.highestBid();
+        expect(highestBid2).toEqual(highestBid.add(weiPerToken));
+        expect(await auction.highestBidder()).toEqual(tokenBidderParamsWithValue.from);
+
+        tokenBidderParamsWithValue = Object.assign({}, tokenBidderParamsWithValue, { value: weiPerToken });
+        tokenBidderParamsWithValue.value = 42000;
+        console.log('LAST BID PARAMS', tokenBidderParamsWithValue);
+
+        let tx6 = await auction.bid(0, tokenBidderParamsWithValue);
+        console.log('TX6', tx6.logs);
+        let highestBid3 = await auction.highestBid();
+        expect(await auction.highestBidder()).toEqual(tokenBidderParamsWithValue.from);
+        expect(highestBid3).toEqual(highestBid2.add(42000));
 
         // This was tested, but we need to finalize (too lazy to recreate an auction just to cancel it and redo all withdrawal logic)
         // let cancelTx = await auction.cancel();
