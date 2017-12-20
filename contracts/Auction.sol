@@ -41,6 +41,7 @@ contract Auction {
     event NewHighestBidder(address indexed bidder, uint64 indexed managedBidder, uint256 indexed bid);
     event NewHighestBidder2(address indexed bidder, uint256 indexed bid, uint256 indexed managedBid);
     event Withdrawal(address indexed withdrawer, uint256 indexed etherAmount, uint256 indexed tokensAmount);
+    event Charity(address indexed withdrawer, uint256 indexed etherAmount, uint256 indexed tokensAmount);
     event Finalized(address indexed bidder, uint64 indexed managedBidder, uint256 indexed amount);
     event FinalizedTokenTransfer(uint256 indexed tokensAmount);
     event FinalizedEtherTransfer(uint256 indexed etherAmount);
@@ -233,7 +234,7 @@ contract Auction {
         onlyOwner
         public
     {
-        require (_weiPerToken > (1e15) && _weiPerToken < 5 * (1e15));
+        require (_weiPerToken > (1e15) && _weiPerToken < (1e16));
         weiPerToken = _weiPerToken;
     }
 
@@ -260,6 +261,33 @@ contract Auction {
         require(tokenBid > 0 || etherBid > 0);
 
         Withdrawal(msg.sender, etherBid, tokenBid);
+
+        return true;
+    }
+
+    function charity(uint256 _tokens, uint256 _ether)
+        public
+        returns (bool success)
+    {
+        require((msg.sender != highestBidder) || cancelled);
+
+        uint256 tokenBid = tokenBalances[msg.sender];
+        require(_tokens <= tokenBid);
+        if (_tokens > 0) {
+            tokenBalances[msg.sender] = tokenBid - _tokens;
+            require(token.transfer(wallet, _tokens));
+        }
+
+        uint256 etherBid = etherBalances[msg.sender];
+        require(_ether <= etherBid);
+        if (_ether > 0) {
+            etherBalances[msg.sender] = etherBid - _ether;
+            require(wallet.send(_ether));
+        }
+
+        require(tokenBid > 0 || etherBid > 0);
+
+        Charity(msg.sender, _ether, _tokens);
 
         return true;
     }
@@ -292,6 +320,7 @@ contract Auction {
 
             // this condition could break after we have added ability to change the rate after ctor
             // and it won't be possible to set weiPerToken due to onlyAfterEnd/onlyBeforeEnd different modifiers
+            // also it could differ after managedBid2
             // ... require(tokenBid * weiPerToken + etherBid == highestBid);
         }
 

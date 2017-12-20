@@ -480,6 +480,47 @@ export class Auction extends SoltsiceContract {
             }
         });
     
+    // tslint:disable-next-line:member-ordering
+    public charity = Object.assign(
+        // tslint:disable-next-line:max-line-length
+        // tslint:disable-next-line:variable-name
+        (_tokens: BigNumber | number, _ether: BigNumber | number, txParams?: W3.TC.TxParams): Promise<W3.TC.TransactionResult> => {
+            return new Promise((resolve, reject) => {
+                this._instance.charity(_tokens, _ether, txParams || this._sendParams)
+                    .then((res) => resolve(res))
+                    .catch((err) => reject(err));
+            });
+        },
+        {
+            // tslint:disable-next-line:max-line-length
+            // tslint:disable-next-line:variable-name
+            sendTransaction: (_tokens: BigNumber | number, _ether: BigNumber | number, txParams?: W3.TC.TxParams): Promise<string> => {
+                return new Promise((resolve, reject) => {
+                    this._instance.charity.sendTransaction(_tokens, _ether, txParams || this._sendParams)
+                        .then((res) => resolve(res))
+                        .catch((err) => reject(err));
+                });
+            }
+        },
+        {
+            // tslint:disable-next-line:max-line-length
+            // tslint:disable-next-line:variable-name
+            data: (_tokens: BigNumber | number, _ether: BigNumber | number): Promise<string> => {
+                return new Promise((resolve, reject) => {
+                    resolve(this._instance.charity.request(_tokens, _ether).params[0].data);
+                });
+            }
+        },
+        {
+            // tslint:disable-next-line:max-line-length
+            // tslint:disable-next-line:variable-name
+            estimateGas: (_tokens: BigNumber | number, _ether: BigNumber | number): Promise<number> => {
+                return new Promise((resolve, reject) => {
+                    this._instance.charity.estimateGas(_tokens, _ether).then((g) => resolve(g));
+                });
+            }
+        });
+    
     // tslint:disable-next-line:max-line-length
     // tslint:disable-next-line:variable-name
     public item( txParams?: W3.TC.TxParams): Promise<string> {
