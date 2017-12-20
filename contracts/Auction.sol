@@ -265,33 +265,6 @@ contract Auction {
         return true;
     }
 
-    function charity(uint256 _tokens, uint256 _ether)
-        public
-        returns (bool success)
-    {
-        require((msg.sender != highestBidder) || cancelled);
-
-        uint256 tokenBid = tokenBalances[msg.sender];
-        require(_tokens <= tokenBid);
-        if (_tokens > 0) {
-            tokenBalances[msg.sender] = tokenBid - _tokens;
-            require(token.transfer(wallet, _tokens));
-        }
-
-        uint256 etherBid = etherBalances[msg.sender];
-        require(_ether <= etherBid);
-        if (_ether > 0) {
-            etherBalances[msg.sender] = etherBid - _ether;
-            require(wallet.send(_ether));
-        }
-
-        require(tokenBid > 0 || etherBid > 0);
-
-        Charity(msg.sender, _ether, _tokens);
-
-        return true;
-    }
-
     function finalize()
         onlyOwner
         onlyNotCancelled

@@ -192,7 +192,7 @@ it('Could mint tokens and bid with them', async () => {
 
         try {
             // could not withdraw while the highest bidder
-            await auction.charity(1, 1, tokenBidderParams);
+            await auction.withdraw(tokenBidderParams);
             expect(true).toBe(false); // fail if reached here
         } catch{ }
 
@@ -220,12 +220,11 @@ it('Could mint tokens and bid with them', async () => {
         expect(highestBidder).not.toEqual(tokenBidderParams.from);
 
         console.log('BALANCES', tokenBalance.toNumber(), etherBalance.toNumber());
-        let charityTx = await auction.charity(1, 1, tokenBidderParams);
+        // let charityTx = await auction.charity(1, 1, tokenBidderParams);
         let withdrawTx = await auction.withdraw(tokenBidderParams);
         console.log('CHARITY TX', withdrawTx);
-        expect((await token.balanceOf(tokenBidder)).toNumber()).toEqual(initialTokenBidderBalance - 1);
+        expect((await token.balanceOf(tokenBidder)).toNumber()).toEqual(initialTokenBidderBalance); //  - 1
         expect((await token.balanceOf(auctionAddress)).toNumber()).toEqual(0);
-        expect((await token.balanceOf(activeAccount)).toNumber()).toEqual(1);
 
         // second attempt fails
         try {
@@ -271,7 +270,7 @@ it('Could mint tokens and bid with them', async () => {
         let finalizeTx = await auction.finalize(maxGasParams);
         console.log('FINALIZE TX', finalizeTx.logs);
 
-        expect((await token.balanceOf(maxGasParams.from)).toNumber()).toBe(maxTokens + 1); // +1 for charity
+        expect((await token.balanceOf(maxGasParams.from)).toNumber()).toBe(maxTokens);
 
         console.log('Wallet balance:', (await w3.getBalance(maxGasParams.from)).toFormat());
 
