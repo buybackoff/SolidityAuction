@@ -1,6 +1,7 @@
 pragma solidity ^0.4.18;
 
 import 'soltsice/contracts/BotManageable.sol';
+import 'zeppelin-solidity/contracts/math/SafeMath.sol';
 
 contract ERC20Basic {
     function totalSupply() public view returns (uint256);
@@ -10,6 +11,7 @@ contract ERC20Basic {
 
 
 contract AuctionHub is BotManageable {
+    using SafeMath for uint256;
 
     /*
      *  Data structures
@@ -17,6 +19,11 @@ contract AuctionHub is BotManageable {
     struct TokenBalance {
         address token;
         uint256 value;
+    }
+
+    struct TokenRate {
+        uint256 value;
+        uint256 decimals;
     }
 
     struct BidderState {
@@ -49,7 +56,7 @@ contract AuctionHub is BotManageable {
      *  Storage
      */
     mapping(address => ActionState) public auctionStates;
-    mapping(address => uint256) public tokenRates;
+    mapping(address => TokenRate) public tokenRates;
 
     /*
      *  Events
@@ -60,10 +67,11 @@ contract AuctionHub is BotManageable {
     event TokenBid(address indexed auction, address bidder, address token, uint256 numberOfTokens);
     event ManagedBid(address indexed auction, uint64 bidder, uint256 bid, address knownManagedBidder);
     event NewHighestBidder(address indexed auction, address bidder, uint64 managedBidder, uint256 totalBid);
-    event Withdrawal(address indexed auction, address bidder, uint256 etherAmount);
+    event TokenRateUpdate(address indexed token, uint256 rate);
+    event Withdrawal(address indexed auction, address bidder, uint256 etherAmount, uint256 tokensBidInEther);
     event Charity(address indexed auction, address bidder, uint256 etherAmount, uint256 tokensAmount);
     event Finalized(address indexed auction, address highestBidder, uint64 highestManagedBidder, uint256 amount);
-    event FinalizedTokenTransfer(address indexed auction, address token, uint256 tokensAmount);
+    event FinalizedTokenTransfer(address indexed auction, address token, uint256 tokensBidInEther);
     event FinalizedEtherTransfer(address indexed auction, uint256 etherAmount);
     event ExtendedEndTime(address indexed auction, uint256 newEndtime);
     event Cancelled(address indexed auction);
@@ -104,9 +112,11 @@ contract AuctionHub is BotManageable {
         _;
     }
 
-
+    /*
+     * _rates are per big token (e.g. Ether vs. wei), i.e. number of wei per [number of tokens]*[10 ** decimals]
+     */
     function AuctionHub 
-        (address _wallet, address[] _tokens, uint256[] _rates)
+        (address _wallet, address[] _tokens, uint256[] _rates, uint256[] _decimals)
         public
         BotManageable(_wallet)
     {
@@ -114,6 +124,7 @@ contract AuctionHub is BotManageable {
         botsStartEndTime[msg.sender] = uint128(now) << 64;
 
         require(_tokens.length == _rates.length);
+        require(_tokens.length == _decimals.length);
 
         // save initial token list
         for (uint i = 0; i < _tokens.length; i++) {
@@ -121,7 +132,8 @@ contract AuctionHub is BotManageable {
             require(_rates[i] > 0);
             ERC20Basic token = ERC20Basic(_tokens[i]);
             require(token.totalSupply() > 0);
-            tokenRates[token] = _rates[i];
+            tokenRates[token] = TokenRate(_rates[i], _decimals[i]);
+            TokenRateUpdate(token, _rates[i]);
         }
     }
 
@@ -163,25 +175,25 @@ contract AuctionHub is BotManageable {
         Charity(0x0, msg.sender, msg.value, 0);
     }
 
-    function bid(address _bidder, address _token, uint256 _tokensNumber)
-        payable
-        onlyActive
+    function bid(address _bidder, uint256 _value, address _token, uint256 _tokensNumber)
+        // onlyActive - inline check to reuse auctionState variable
         public
         returns (bool isHighest)
     {
-
-        // mapping(address => BidderState) bidderStates;
         ActionState storage auctionState = auctionStates[msg.sender];
-        BidderState storage bidderState = auctionStates[msg.sender].bidderStates[_bidder];
+        // same as onlyActive modifier, but we already have a variable here
+        require (now < auctionState.endSeconds && !auctionState.cancelled);
+
+        BidderState storage bidderState = auctionState.bidderStates[_bidder];
         
         uint256 totalBid;
         if (_tokensNumber > 0) {
             totalBid = tokenBid(msg.sender, _bidder,  _token, _tokensNumber);
         } else {
-            require(msg.value > 0);
+            require(_value > 0);
         }
 
-        uint256 etherBid = bidderState.etherBalance + msg.value;
+        uint256 etherBid = bidderState.etherBalance + _value;
         bidderState.etherBalance = etherBid;
         totalBid = totalBid + etherBid + bidderState.managedBid;
 
@@ -207,16 +219,16 @@ contract AuctionHub is BotManageable {
         internal
         returns (uint256 tokenBid)
     {
+        // NB actual token transfer happens in auction contracts, which owns both ether and tokens
+        // This Hub contract is for accounting
 
-        // mapping(address => BidderState) bidderStates;
         ActionState storage auctionState = auctionStates[_auction];
-        BidderState storage bidderState = auctionStates[_auction].bidderStates[_bidder];
+        BidderState storage bidderState = auctionState.bidderStates[_bidder];
         
-        // start with tokens only, this variable is reused in the first if conditoin
         uint256 totalBid = bidderState.tokensBalanceInEther;
 
-        uint256 tokenRate = tokenRates[_token];
-        require(tokenRate > 0);
+        TokenRate storage tokenRate = tokenRates[_token];
+        require(tokenRate.value > 0);
 
         // find token index
         uint256 index = bidderState.tokenBalances.length;
@@ -232,16 +244,11 @@ contract AuctionHub is BotManageable {
             bidderState.tokenBalances.push(TokenBalance(_token, 0));
         }
 
-        // sender must approve transfer before calling this function
-        require(ERC20Basic(_token).transferFrom(_bidder, this, _tokensNumber));
-
         // safe math is already in transferFrom
         bidderState.tokenBalances[index].value += _tokensNumber;
 
-        // TODO decimals
-
-        // by now totalBid still only includes token build, see comment before if() 
-        totalBid = totalBid + _tokensNumber * tokenRate;
+        // tokenRate.value is for a whole/big token (e.g. ether vs. wei) but _tokensNumber is in small/wei tokens, need to divide by decimals
+        totalBid = totalBid + _tokensNumber.mul(tokenRate.value).sub(10 ** tokenRate.decimals);
         require(totalBid <= auctionState.maxTokenBidInEther);
 
         bidderState.tokensBalanceInEther = totalBid;
@@ -249,6 +256,171 @@ contract AuctionHub is BotManageable {
         TokenBid(_auction, _bidder, _token, _tokensNumber);
 
         return totalBid;
+    }
+
+    function managedBid(uint64 _managedBidder, uint256 _managedBid, address _knownManagedBidder)
+        // onlyActive - inline check to reuse auctionState variable
+        // onlyAllowedManagedBids - inline check to reuse auctionState variable
+        // onlyBot - done in Auction that is msg.sender, only bot could create auctions and set endSeconds to non-zero
+        public
+        returns (bool isHighest)
+    {
+        require(_managedBidder != 0);
+
+        ActionState storage auctionState = auctionStates[msg.sender];
+        // same as onlyActive+onlyAllowedManagedBids modifiers, but we already have a variable here
+        require (now < auctionState.endSeconds && !auctionState.cancelled && auctionState.allowManagedBids);
+
+        
+        // sum with direct bid if any
+        uint256 directBid = 0;
+        if (_knownManagedBidder != 0x0) {
+            BidderState storage bidderState = auctionState.bidderStates[_knownManagedBidder];
+            require(_managedBid > bidderState.managedBid);
+            bidderState.managedBid = _managedBid;
+            directBid = bidderState.tokensBalanceInEther + bidderState.etherBalance;
+        }
+
+        // NB: _managedBid is the total amount of all bids from backend
+        // calculated without any direct bid. It is important to calculate direct bids
+        // inside this transaction and make the _knownManagedBidder the highest
+        // to prevent this wallet to withdraw money and remain the highest
+
+        uint256 totalBid = directBid + _managedBid;
+
+        if (totalBid > auctionState.highestBid && totalBid >= auctionState.minPrice) {
+            auctionState.highestBid = totalBid;
+            auctionState.highestBidder = _knownManagedBidder;
+            auctionState.highestManagedBidder = _managedBidder;
+            
+            NewHighestBidder(msg.sender, _knownManagedBidder, _managedBidder, totalBid);
+
+            if ((auctionState.endSeconds - now) < 1800) {
+                uint256 newEnd = now + 1800;
+                auctionState.endSeconds = newEnd;
+                ExtendedEndTime(msg.sender, newEnd);
+            }
+            isHighest = true;
+        }
+        // event ManagedBid(address indexed auction, uint64 bidder, uint256 bid, address knownManagedBidder);
+        ManagedBid(msg.sender, _managedBidder, _managedBid, _knownManagedBidder);
+        return isHighest;
+    }
+
+    function totalDirectBid(address _auction, address _bidder)
+        view
+        public
+        returns (uint256 _totalBid)
+    {
+        ActionState storage auctionState = auctionStates[_auction];
+        BidderState storage bidderState = auctionState.bidderStates[_bidder];
+        return bidderState.tokensBalanceInEther + bidderState.etherBalance;
+    }
+
+    function setTokenRate(address _token, uint256 _tokenRate)
+        onlyBot
+        public
+    {
+        TokenRate storage tokenRate = tokenRates[_token];
+        require(tokenRate.value > 0);
+        tokenRate.value = _tokenRate;
+        TokenRateUpdate(_token, _tokenRate);
+    }
+
+    function withdraw(address _bidder)
+        public
+        returns (bool success)
+    {
+        ActionState storage auctionState = auctionStates[msg.sender];
+        BidderState storage bidderState = auctionState.bidderStates[_bidder];
+
+        bool sent; 
+
+        // anyone could withdraw at any time except the highest bidder
+        // if cancelled, the highest bidder could withdraw as well
+        require((_bidder != auctionState.highestBidder) || auctionState.cancelled);
+        uint256 tokensBalanceInEther = bidderState.tokensBalanceInEther;
+        if (bidderState.tokenBalances.length > 0) {
+            for (uint i = 0; i < bidderState.tokenBalances.length; i++) {
+                uint256 tokenBidValue = bidderState.tokenBalances[i].value;
+                if (tokenBidValue > 0) {
+                    bidderState.tokenBalances[i].value = 0;
+                    sent = Auction(msg.sender).sendTokens(bidderState.tokenBalances[i].token, _bidder, tokenBidValue);
+                    require(sent);
+                }
+            }
+            bidderState.tokensBalanceInEther = 0;
+        } else {
+            require(tokensBalanceInEther == 0);
+        }
+
+        uint256 etherBid = bidderState.etherBalance;
+        if (etherBid > 0) {
+            bidderState.etherBalance = 0;
+            sent = Auction(msg.sender).sendEther(_bidder, etherBid);
+            require(sent);
+        }
+
+        Withdrawal(msg.sender, _bidder, etherBid, tokensBalanceInEther);
+        
+        return true;
+    }
+
+    function finalize()
+        // onlyNotCancelled - inline check to reuse auctionState variable
+        // onlyAfterEnd - inline check to reuse auctionState variable
+        public
+        returns (bool)
+    {
+        ActionState storage auctionState = auctionStates[msg.sender];
+        // same as onlyNotCancelled+onlyAfterEnd modifiers, but we already have a variable here
+        require (!auctionState.finalized && now > auctionState.endSeconds && auctionState.endSeconds > 0 && !auctionState.cancelled);
+
+        if (auctionState.highestBidder != address(0)) {
+            bool sent; 
+            BidderState storage bidderState = auctionState.bidderStates[auctionState.highestBidder];
+            uint256 tokensBalanceInEther = bidderState.tokensBalanceInEther;
+            if (bidderState.tokenBalances.length > 0) {
+                for (uint i = 0; i < bidderState.tokenBalances.length; i++) {
+                    uint256 tokenBid = bidderState.tokenBalances[i].value;
+                    if (tokenBid > 0) {
+                        bidderState.tokenBalances[i].value = 0;
+                        sent = Auction(msg.sender).sendTokens(bidderState.tokenBalances[i].token, wallet, tokenBid);
+                        require(sent);
+                        FinalizedTokenTransfer(msg.sender, bidderState.tokenBalances[i].token, tokenBid);
+                    }
+                }
+                bidderState.tokensBalanceInEther = 0;
+            } else {
+                require(tokensBalanceInEther == 0);
+            }
+            
+            uint256 etherBid = bidderState.etherBalance;
+            if (etherBid > 0) {
+                bidderState.etherBalance = 0;
+                sent = Auction(msg.sender).sendEther(wallet, etherBid);
+                require(sent);
+                FinalizedEtherTransfer(msg.sender, etherBid);
+            }
+        }
+
+        auctionState.finalized = true;
+        Finalized(msg.sender, auctionState.highestBidder, auctionState.highestManagedBidder, auctionState.highestBid);
+        return true;
+    }
+
+    function cancel()
+        // onlyActive - inline check to reuse auctionState variable
+        public
+        returns (bool success)
+    {
+        ActionState storage auctionState = auctionStates[msg.sender];
+        // same as onlyActive modifier, but we already have a variable here
+        require (now < auctionState.endSeconds && !auctionState.cancelled);
+
+        auctionState.cancelled = true;
+        Cancelled(msg.sender);
+        return true;
     }
 
 }
@@ -259,26 +431,17 @@ contract Auction {
     AuctionHub public owner;
     address public wallet;
 
-    event Bid(address indexed bidder, uint256 totalBidInEther, uint256 tokensBid);
-    event ManagedBid(uint64 indexed bidder, uint256 bid);
-    event ManagedBid2(uint64 indexed bidder, uint256 bid, address knownManagedBidder);
-    event NewHighestBidder(address indexed bidder, uint64 indexed managedBidder, uint256 bid);
-    event NewHighestBidder2(address indexed bidder, uint256 bid, uint256 managedBid);
-    event Withdrawal(address indexed withdrawer, uint256 etherAmount, uint256 tokensAmount);
-    event Charity(address indexed withdrawer, uint256 etherAmount, uint256 tokensAmount);
-    event Finalized(address indexed bidder, uint64 managedBidder, uint256 amount);
-    event FinalizedTokenTransfer(uint256 tokensAmount);
-    event FinalizedEtherTransfer(uint256 etherAmount);
-
-    event ExtendedEndTime(uint256 newEndtime);
-    event Cancelled();
-
     modifier onlyOwner {
+        require(owner == msg.sender);
+        _;
+    }
+
+    modifier onlyBot {
         require(owner.isBot(msg.sender));
         _;
     }
 
-    modifier onlyNotOwner {
+    modifier onlyNotBot {
         require(!owner.isBot(msg.sender));
         _;
     }
@@ -300,7 +463,7 @@ contract Auction {
         payable
         public
     {
-        bid(0x0, 0);
+        owner.bid(msg.sender, msg.value, 0x0, 0);
     }
 
     function bid(address _token, uint256 _tokensNumber)
@@ -308,159 +471,73 @@ contract Auction {
         public
         returns (bool isHighest)
     {
-        return owner.bid(msg.sender, _token, _tokensNumber);
+        if (_token != 0x0 && _tokensNumber > 0) {
+            require(ERC20Basic(_token).transferFrom(msg.sender, this, _tokensNumber));
+        }
+        return owner.bid(msg.sender, msg.value, _token, _tokensNumber);
     }
 
-    // function managedBid(uint64 _managedBidder, uint256 _managedBid)
-    //     onlyBeforeEnd
-    //     onlyNotCancelled
-    //     onlyOwner
-    //     onlyAllowedManagedBids
-    //     public
-    //     returns (bool isHighest)
-    // {
-    //     if (_managedBid > highestBid && _managedBid >= minPrice) {
-    //         highestBid = _managedBid;
-    //         highestBidder = address(0);
-    //         highestManagedBidder = _managedBidder;
-    //         NewHighestBidder(highestBidder, highestManagedBidder, highestBid);
-    //         if ((endSeconds - now) < 1800) {
-    //             endSeconds = now + 1800;
-    //             ExtendedEndTime(endSeconds);
-    //         }
-    //     }
-    //     ManagedBid(_managedBidder, _managedBid);
-    //     return highestBid == _managedBid;
-    // }
+    function managedBid(uint64 _managedBidder, uint256 _managedBid)
+        onlyBot
+        public
+        returns (bool isHighest)
+    {
+        return owner.managedBid(_managedBidder, _managedBid, 0x0);
+    }
 
-    // function managedBid2(uint64 _managedBidder, uint256 _managedBid, address _knownManagedBidder)
-    //     onlyBeforeEnd
-    //     onlyNotCancelled
-    //     onlyOwner
-    //     onlyAllowedManagedBids
-    //     public
-    //     returns (bool isHighest)
-    // {
-    //     // NB: _managedBid is the total amount of all bids from backend
-    //     // calculated without any direct bid. It is important to calculate direct bids
-    //     // inside this transaction and make the _knownManagedBidder the highest
-    //     // to prevent this wallet to withdraw money and remain the highest
+    function managedBid2(uint64 _managedBidder, uint256 _managedBid, address _knownManagedBidder)
+        onlyBot
+        public
+        returns (bool isHighest)
+    {
+        return owner.managedBid(_managedBidder, _managedBid, _knownManagedBidder);
+    }
 
-    //     require(_knownManagedBidder != address(0));
+    function totalDirectBid(address _bidder)
+        public
+        returns (uint256 _totalBid)
+    {
+        return owner.totalDirectBid(this, _bidder);
+    }
 
-    //     require(_managedBid > managedBids[_knownManagedBidder]);
-    //     managedBids[_knownManagedBidder] = _managedBid;
+    function sendTokens(address _token, address _to, uint256 _amount)
+        onlyOwner
+        public
+        returns (bool)
+    {
+        return ERC20Basic(_token).transfer(msg.sender, _amount);
+    }
 
-    //     uint256 direct = totalDirectBid(_knownManagedBidder);
-    //     uint256 totalBid = direct + _managedBid;
-    //     if (totalBid > highestBid && totalBid >= minPrice) {
-    //         highestBid = totalBid;
-    //         highestBidder = _knownManagedBidder;
-    //         highestManagedBidder = 0;
-    //         NewHighestBidder2(highestBidder, highestBid, _managedBid);
-    //         if ((endSeconds - now) < 1800) {
-    //             endSeconds = now + 1800;
-    //             ExtendedEndTime(endSeconds);
-    //         }
-    //     }
-    //     ManagedBid2(_managedBidder, _managedBid, _knownManagedBidder);
-    //     return highestBid == totalBid;
-    // }
+    function sendEther(address _to, uint256 _amount)
+        onlyOwner
+        public
+        returns (bool)
+    {
+        return _to.send(_amount);
+    }
 
-    // function totalDirectBid(address _address)
-    //     constant
-    //     public
-    //     returns (uint256 _totalBid)
-    // {
-    //     return tokenBalancesInEther[_address] + etherBalances[_address];
-    // }
+    function withdraw()
+        public
+        returns (bool success)
+    {
+        return owner.withdraw(msg.sender);
+    }
 
+    function finalize()
+        onlyBot
+        public
+        returns (bool)
+    {
+        return owner.finalize();
+    }
 
-    // function setWeiPerToken(uint256 _weiPerToken)
-    //     onlyBeforeEnd
-    //     onlyNotCancelled
-    //     onlyOwner
-    //     public
-    // {
-    //     require (_weiPerToken > (1e15) && _weiPerToken < (1e16));
-    //     weiPerToken = _weiPerToken;
-    // }
-
-    // function withdraw()
-    //     public
-    //     returns (bool success)
-    // {
-    //     // anyone could withdraw at any time except the highest bidder
-    //     // if canceled, the highest bidder could withdraw as well
-    //     require((msg.sender != highestBidder) || cancelled);
-
-    //     uint256 tokenBid = tokenBalances[msg.sender];
-    //     if (tokenBid > 0) {
-    //         tokenBalances[msg.sender] = 0;
-    //         require(token.transfer(msg.sender, tokenBid));
-    //     }
-
-    //     uint256 etherBid = etherBalances[msg.sender];
-    //     if (etherBid > 0) {
-    //         etherBalances[msg.sender] = 0;
-    //         require(msg.sender.send(etherBid));
-    //     }
-
-    //     require(tokenBid > 0 || etherBid > 0);
-
-    //     Withdrawal(msg.sender, etherBid, tokenBid);
-
-    //     return true;
-    // }
-
-    // function finalize()
-    //     onlyOwner
-    //     onlyNotCancelled
-    //     onlyAfterEnd
-    //     public
-    //     returns (bool)
-    // {
-    //     require(!finalized);
-
-    //     if (highestBidder != address(0)) {
-    //         uint256 tokenBid = tokenBalances[highestBidder];
-    //         if (tokenBid > 0) {
-    //             tokenBalances[highestBidder] = 0;
-    //             require(token.transfer(wallet, tokenBid));
-    //             FinalizedTokenTransfer(tokenBid);
-    //         }
-
-    //         uint256 etherBid = etherBalances[highestBidder];
-    //         if (etherBid > 0) {
-    //             etherBalances[highestBidder] = 0;
-    //             require(wallet.send(etherBid));
-    //             FinalizedEtherTransfer(etherBid);
-    //         }
-
-    //         require(tokenBid > 0 || etherBid > 0);
-
-    //         // this condition could break after we have added ability to change the rate after ctor
-    //         // and it won't be possible to set weiPerToken due to onlyAfterEnd/onlyBeforeEnd different modifiers
-    //         // also it could differ after managedBid2
-    //         // ... require(tokenBid * weiPerToken + etherBid == highestBid);
-    //     }
-
-    //     finalized = true;
-    //     Finalized(highestBidder, highestManagedBidder, highestBid);
-    //     return true;
-    // }
-
-    // function cancel()
-    //     onlyOwner
-    //     onlyBeforeEnd
-    //     onlyNotCancelled
-    //     public
-    //     returns (bool success)
-    // {
-    //     cancelled = true;
-    //     Cancelled();
-    //     return true;
-    // }
+    function cancel()
+        onlyBot
+        public
+        returns (bool success)
+    {
+        return  owner.cancel();
+    }
 }
 
 
