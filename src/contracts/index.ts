@@ -11,3 +11,5 @@ export * from './MultiSigWallet';
 export * from './Ownable';
 export * from './SafeMath';
 export * from './StandardToken';
+export * from './TokenStarsAuction';
+export * from './TokenStarsAuctionHub';

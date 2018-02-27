@@ -1,4 +1,4 @@
-import { AuctionHub, Auction, AceToken } from '../contracts'
+import { AceToken, TokenStarsAuctionHub, TokenStarsAuction } from '../contracts'
 import { W3, getStorage, Storage, TestRPC, toBN, testAccounts, testPrivateKeys } from 'soltsice';
 import * as Ganache from 'ganache-cli';
 import { access } from 'fs';
@@ -76,7 +76,7 @@ it('Could deploy auction factory and create auction', async () => {
 
     let minPrice = weiPerToken;
 
-    let hub = await AuctionHub.New(maxGasParams, {_wallet: activeAccount, _tokens: [token.address], _rates: [weiPerToken], _decimals: [0]}, w3);
+    let hub = await TokenStarsAuctionHub.New(maxGasParams, {_wallet: activeAccount}, w3);
     console.log('FACTORY ADDRESS', await hub.address);
 
     expect(await hub.isBot(activeAccount)).toBe(true);
@@ -91,7 +91,7 @@ it('Could deploy auction factory and create auction', async () => {
 
     auctionAddress = args.auction;
 
-    let auction = await Auction.At(auctionAddress, w3);
+    let auction = await TokenStarsAuction.At(auctionAddress, w3);
 
     let actualAddress = await auction.address;
 
@@ -103,7 +103,7 @@ it('Could deploy auction factory and create auction', async () => {
 it('Could send manage bid', async () => {
 
     let bid = weiPerToken;
-    let auction = await Auction.At(auctionAddress, w3);
+    let auction = await TokenStarsAuction.At(auctionAddress, w3);
 
     console.log('SEND PARAMS', maxGasParams);
     let tx = await auction.managedBid(42, bid, maxGasParams);
@@ -122,7 +122,7 @@ it('Could extend end time', async () => {
     if (await w3.isTestRPC) {
         let bid = weiPerToken.add(1);
 
-        let auction = await Auction.At(auctionAddress, w3);
+        let auction = await TokenStarsAuction.At(auctionAddress, w3);
 
         let contractEnd = (await auction.endSeconds()).toNumber();
 
@@ -174,7 +174,7 @@ it('Could mint tokens and bid with them', async () => {
         let allowance = await token.allowance(tokenBidder, auctionAddress);
         console.log('ALLOWANCE', allowance.toNumber());
 
-        let auction = await Auction.At(auctionAddress, w3);
+        let auction = await TokenStarsAuction.At(auctionAddress, w3);
 
         try {
             let tokensNumber = maxTokensInEther.div(weiPerToken).add(1);
@@ -228,6 +228,8 @@ it('Could mint tokens and bid with them', async () => {
         // expect(tokenBalance).toEqual(auctionTokenBalance);
         expect(highestBidder).not.toEqual(tokenBidderParams.from);
 
+        let withdrawData = await auction.withdraw.data();
+        console.log('WITHDRAW DATA: ', withdrawData);
         let withdrawTx = await auction.withdraw(tokenBidderParams);
         console.log('WITHDRAW TX', withdrawTx.receipt.logs);
         expect((await token.balanceOf(auctionAddress)).toNumber()).toEqual(0);
