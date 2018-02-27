@@ -19,7 +19,7 @@ export class TokenStarsAuction extends SoltsiceContract {
     }
 
     // tslint:disable-next-line:max-line-length
-    public static async New(deploymentParams: W3.TX.TxParams, ctorParams?: {_owner: string, _wallet: string}, w3?: W3, link?: SoltsiceContract[], privateKey?: string): Promise<TokenStarsAuction> {
+    public static async New(deploymentParams: W3.TX.TxParams, ctorParams?: {_owner: string}, w3?: W3, link?: SoltsiceContract[], privateKey?: string): Promise<TokenStarsAuction> {
         w3 = w3 || W3.Default;
         if (!privateKey) {
             let contract = new TokenStarsAuction(deploymentParams, ctorParams, w3, link);
@@ -48,15 +48,15 @@ export class TokenStarsAuction extends SoltsiceContract {
     }
 
     // tslint:disable-next-line:max-line-length
-    public static NewData(ctorParams?: {_owner: string, _wallet: string}, w3?: W3): string {
+    public static NewData(ctorParams?: {_owner: string}, w3?: W3): string {
         // tslint:disable-next-line:max-line-length
-        let data = SoltsiceContract.NewDataImpl(w3, TokenStarsAuction.Artifacts, ctorParams ? [ctorParams!._owner, ctorParams!._wallet] : []);
+        let data = SoltsiceContract.NewDataImpl(w3, TokenStarsAuction.Artifacts, ctorParams ? [ctorParams!._owner] : []);
         return data;
     }
 
     protected constructor(
         deploymentParams: string | W3.TX.TxParams | object,
-        ctorParams?: {_owner: string, _wallet: string},
+        ctorParams?: {_owner: string},
         w3?: W3,
         link?: SoltsiceContract[]
     ) {
@@ -64,7 +64,7 @@ export class TokenStarsAuction extends SoltsiceContract {
         super(
             w3,
             TokenStarsAuction.Artifacts,
-            ctorParams ? [ctorParams!._owner, ctorParams!._wallet] : [],
+            ctorParams ? [ctorParams!._owner] : [],
             deploymentParams,
             link
         );
@@ -205,17 +205,6 @@ export class TokenStarsAuction extends SoltsiceContract {
     public endSeconds( txParams?: W3.TX.TxParams): Promise<BigNumber> {
         return new Promise((resolve, reject) => {
             this._instance.endSeconds
-                .call( txParams || this._sendParams)
-                .then((res) => resolve(res))
-                .catch((err) => reject(err));
-        });
-    }
-    
-    // tslint:disable-next-line:max-line-length
-    // tslint:disable-next-line:variable-name
-    public wallet( txParams?: W3.TX.TxParams): Promise<string> {
-        return new Promise((resolve, reject) => {
-            this._instance.wallet
                 .call( txParams || this._sendParams)
                 .then((res) => resolve(res))
                 .catch((err) => reject(err));

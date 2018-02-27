@@ -9,13 +9,13 @@ contract ERC20Basic {
     function transfer(address to, uint256 value) public returns (bool);
 }
 
-
 contract AuctionHub is BotManageable {
     using SafeMath for uint256;
 
     /*
      *  Data structures
      */
+    
     struct TokenBalance {
         address token;
         uint256 value;
@@ -162,7 +162,7 @@ contract AuctionHub is BotManageable {
         require(_maxTokenBidInEther <= 1000 ether);
         require(_minPrice > 0);
 
-        Auction auction = new Auction(this, wallet);
+        Auction auction = new Auction(this);
 
         ActionState storage auctionState = auctionStates[auction];
 
@@ -201,9 +201,10 @@ contract AuctionHub is BotManageable {
         if (_tokensNumber > 0) {
             totalBid = tokenBid(msg.sender, _bidder,  _token, _tokensNumber);
         }else {
+            require(_value > 0);
+
             // NB if current token bid == 0 we still could have previous token bids
             totalBid = bidderState.tokensBalanceInEther;
-            require(_value > 0);
         }
 
         uint256 etherBid = bidderState.etherBalance + _value;
@@ -254,11 +255,11 @@ contract AuctionHub is BotManageable {
 
         // array was empty/token not found - push empty to the end
         if (index == bidderState.tokenBalances.length) {
-            bidderState.tokenBalances.push(TokenBalance(_token, 0));
+            bidderState.tokenBalances.push(TokenBalance(_token, _tokensNumber));
+        } else {
+            // safe math is already in transferFrom
+            bidderState.tokenBalances[index].value += _tokensNumber;
         }
-
-        // safe math is already in transferFrom
-        bidderState.tokenBalances[index].value += _tokensNumber;
 
         // tokenRate.value is for a whole/big token (e.g. ether vs. wei) but _tokensNumber is in small/wei tokens, need to divide by decimals
         totalBid = totalBid + _tokensNumber.mul(tokenRate.value).div(10 ** tokenRate.decimals);
@@ -442,7 +443,6 @@ contract AuctionHub is BotManageable {
 contract Auction {
 
     AuctionHub public owner;
-    address public wallet;
 
     modifier onlyOwner {
         require(owner == msg.sender);
@@ -460,16 +460,12 @@ contract Auction {
     }
 
     function Auction(
-        address _owner,
-        address _wallet
+        address _owner
     ) 
         public 
     {
         require(_owner != address(0x0));
-        require(_wallet != address(0x0));
-        
         owner = AuctionHub(_owner);
-        wallet = _wallet;
     }
 
     function () 

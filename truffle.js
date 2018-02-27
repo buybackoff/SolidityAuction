@@ -12,11 +12,11 @@ module.exports = {
       network_id: "*" // Match any network id
     },
 
-    rinkeby: {
-      host: "localhost",
-      port: 8544,
-      network_id: "4"
-    }
+    // rinkeby: {
+    //   host: "localhost",
+    //   port: 8544,
+    //   network_id: "4"
+    // }
 
   }
 };

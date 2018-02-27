@@ -1,4 +1,4 @@
-import { AceToken, TokenStarsAuctionHub, TokenStarsAuction } from '../contracts'
+import { AceToken, TeamToken, AuctionHub, Auction } from '../contracts'
 import { W3, getStorage, Storage, TestRPC, toBN, testAccounts, testPrivateKeys } from 'soltsice';
 import * as Ganache from 'ganache-cli';
 import { access } from 'fs';
@@ -34,7 +34,8 @@ let end = (new Date(2018, 3, 25).getTime() / 1000);
 let weiPerToken = w3.toBigNumber('2400000000000000');
 let maxTokensInEther = weiPerToken.mul(50);
 
-let token: AceToken;
+let aceToken: AceToken;
+let teamToken: TeamToken;   
 
 beforeAll(async () => {
 
@@ -69,14 +70,15 @@ beforeEach(async () => {
 
 it('Could deploy auction factory and create auction', async () => {
     
-    token = await AceToken.New(maxGasParams, undefined, w3);
+    aceToken = await AceToken.New(maxGasParams, undefined, w3);
+    teamToken = await TeamToken.New(maxGasParams, undefined, w3);
 
-    let tokenAddress = await token.address;
+    let tokenAddress = await aceToken.address;
     console.log('TOKEN ADDRESS', tokenAddress);
 
     let minPrice = weiPerToken;
 
-    let hub = await TokenStarsAuctionHub.New(maxGasParams, {_wallet: activeAccount}, w3);
+    let hub = await AuctionHub.New(maxGasParams, {_wallet: activeAccount, _tokens: [aceToken.address, teamToken.address], _rates: [weiPerToken, weiPerToken], _decimals: [0, 4]}, w3);
     console.log('FACTORY ADDRESS', await hub.address);
 
     expect(await hub.isBot(activeAccount)).toBe(true);
@@ -91,19 +93,21 @@ it('Could deploy auction factory and create auction', async () => {
 
     auctionAddress = args.auction;
 
-    let auction = await TokenStarsAuction.At(auctionAddress, w3);
+    let auction = await Auction.At(auctionAddress, w3);
 
     let actualAddress = await auction.address;
 
     expect(actualAddress).toBe(auctionAddress);
-    expect(await auction.item()).toBe('test_item');
+    let item = await auction.item();
+    console.log('TEST ITEM: ', item);
+    expect(item).toBe('test_item');
 })
 
 
 it('Could send manage bid', async () => {
 
     let bid = weiPerToken;
-    let auction = await TokenStarsAuction.At(auctionAddress, w3);
+    let auction = await Auction.At(auctionAddress, w3);
 
     console.log('SEND PARAMS', maxGasParams);
     let tx = await auction.managedBid(42, bid, maxGasParams);
@@ -122,7 +126,7 @@ it('Could extend end time', async () => {
     if (await w3.isTestRPC) {
         let bid = weiPerToken.add(1);
 
-        let auction = await TokenStarsAuction.At(auctionAddress, w3);
+        let auction = await Auction.At(auctionAddress, w3);
 
         let contractEnd = (await auction.endSeconds()).toNumber();
 
@@ -162,23 +166,23 @@ it('Could mint tokens and bid with them', async () => {
 
         let initialTokenBidderBalance = 1000;
 
-        let mintedTx = await token.mint(tokenBidder, initialTokenBidderBalance, maxGasParams);
+        let mintedTx = await aceToken.mint(tokenBidder, initialTokenBidderBalance, maxGasParams);
         console.log('MINTED TX', mintedTx);
-        let balance = await token.balanceOf(tokenBidder);
+        let balance = await aceToken.balanceOf(tokenBidder);
         expect(balance.toNumber()).toBe(1000);
 
         let tokenBidderParams: W3.TX.TxParams = Object.assign({}, maxGasParams, { from: tokenBidder });
 
-        let approveTx = await token.approve(auctionAddress, 100, tokenBidderParams);
+        let approveTx = await aceToken.approve(auctionAddress, 100, tokenBidderParams);
         console.log('APPROVE TX', approveTx);
-        let allowance = await token.allowance(tokenBidder, auctionAddress);
+        let allowance = await aceToken.allowance(tokenBidder, auctionAddress);
         console.log('ALLOWANCE', allowance.toNumber());
 
-        let auction = await TokenStarsAuction.At(auctionAddress, w3);
+        let auction = await Auction.At(auctionAddress, w3);
 
         try {
             let tokensNumber = maxTokensInEther.div(weiPerToken).add(1);
-            let tx = await auction.bid(token.address, tokensNumber, tokenBidderParams);
+            let tx = await auction.bid(aceToken.address, tokensNumber, tokenBidderParams);
             console.log('TX', tx);
             expect(true).toBe(false); // fail if reached here
         } catch { }
@@ -188,10 +192,10 @@ it('Could mint tokens and bid with them', async () => {
 
         let tokensNumber = maxTokensInEther.div(weiPerToken).sub(etherBidInTokens);
         console.log('TOKENS NUMBER: ', tokensNumber.toFormat());
-        console.log('TOKENS NUMBER IN WEI: ', tokensNumber.mul(weiPerToken).add(tokenBidderParamsWithValue.value).toFormat());
+        console.log('TOKENS NUMBER IN WEI: ', tokensNumber.mul(weiPerToken).toFormat());
         let highestBid0 = await auction.highestBid();
         console.log('HIGHEST BID0: ', highestBid0.toFixed());
-        let tx2 = await auction.bid(token.address, tokensNumber, tokenBidderParamsWithValue);
+        let tx2 = await auction.bid(aceToken.address, tokensNumber, tokenBidderParamsWithValue);
         let highestBid = await auction.highestBid();
         console.log('HIGHEST BID: ', highestBid.toFixed());
         expect(highestBid).toEqual(maxTokensInEther);
@@ -222,7 +226,7 @@ it('Could mint tokens and bid with them', async () => {
 
         // let tokenBalance = await auction.tokenBalances(tokenBidder);
         // let etherBalance = await auction.etherBalances(tokenBidder);
-        let auctionTokenBalance = await token.balanceOf(auctionAddress);
+        let auctionTokenBalance = await aceToken.balanceOf(auctionAddress);
         console.log('AUCTION BALANCE: ', auctionTokenBalance.toFixed());
 
         // expect(tokenBalance).toEqual(auctionTokenBalance);
@@ -231,9 +235,9 @@ it('Could mint tokens and bid with them', async () => {
         let withdrawData = await auction.withdraw.data();
         console.log('WITHDRAW DATA: ', withdrawData);
         let withdrawTx = await auction.withdraw(tokenBidderParams);
-        console.log('WITHDRAW TX', withdrawTx.receipt.logs);
-        expect((await token.balanceOf(auctionAddress)).toNumber()).toEqual(0);
-        expect((await token.balanceOf(tokenBidder)).toNumber()).toEqual(initialTokenBidderBalance); //  - 1
+        console.log('WITHDRAW TX', withdrawTx);
+        expect((await aceToken.balanceOf(auctionAddress)).toNumber()).toEqual(0);
+        expect((await aceToken.balanceOf(tokenBidder)).toNumber()).toEqual(initialTokenBidderBalance); //  - 1
         
 
         // second attempt fails
@@ -244,7 +248,7 @@ it('Could mint tokens and bid with them', async () => {
 
 
         // re-bid after withdraw so we could test finalization with tokens
-        let tx4 = await auction.bid(token.address, maxTokensInEther.div(weiPerToken), tokenBidderParamsWithValue);
+        let tx4 = await auction.bid(aceToken.address, maxTokensInEther.div(weiPerToken), tokenBidderParamsWithValue);
         expect(await auction.highestBidder()).toEqual(tokenBidderParamsWithValue.from);
 
         highestBid = await auction.highestBid();
@@ -280,7 +284,7 @@ it('Could mint tokens and bid with them', async () => {
         let finalizeTx = await auction.finalize(maxGasParams);
         console.log('FINALIZE TX', finalizeTx.logs);
 
-        expect((await token.balanceOf(maxGasParams.from))).toEqual(maxTokensInEther.div(weiPerToken));
+        expect((await aceToken.balanceOf(maxGasParams.from))).toEqual(maxTokensInEther.div(weiPerToken));
 
         console.log('Wallet balance:', (await w3.getBalance(maxGasParams.from)).toFormat());
 

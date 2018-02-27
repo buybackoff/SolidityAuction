@@ -24,13 +24,13 @@ pragma solidity ^0.4.18;
 import 'zeppelin-solidity/contracts/math/SafeMath.sol';
 import 'zeppelin-solidity/contracts/token/MintableToken.sol';
 
-contract AceToken is MintableToken {
+contract TokenMock is MintableToken {
     using SafeMath for uint256;
     
     // ERC20 constants
-    string public constant name = "ACE Token";
-    string public constant symbol = "ACE";
-    uint public constant decimals = 0;
+    string public name = "ACE Token";
+    string public symbol = "ACE";
+    uint public decimals = 0;
 
     // Minting constants
     uint256 public constant MAXSOLD_SUPPLY = 99000000;
@@ -67,7 +67,11 @@ contract AceToken is MintableToken {
         _;
     }
 
-    function AceToken() {
+    function TokenMock(string _name, string _symbol, uint256 _decimals) {
+      name = _name;
+      symbol = _symbol;
+      decimals = _decimals;
+
       teamTokensHolder = msg.sender;
       communityTokensHolder = msg.sender;
       
@@ -224,5 +228,21 @@ contract AceToken is MintableToken {
         }
         Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
         return true;
+    }
+}
+
+contract AceToken is TokenMock {
+    
+    function AceToken()
+      TokenMock("ACE Token", "ACE", 0)
+    {
+    }
+}
+
+contract TeamToken is TokenMock {
+    
+    function TeamToken()
+      TokenMock("TEAM Token", "TEAM", 4)
+    {
     }
 }

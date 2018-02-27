@@ -11,5 +11,8 @@ export * from './MultiSigWallet';
 export * from './Ownable';
 export * from './SafeMath';
 export * from './StandardToken';
+export * from './TeamToken';
+export * from './TokenMock';
 export * from './TokenStarsAuction';
 export * from './TokenStarsAuctionHub';
+export * from './TokenStarsAuctionHubMock';

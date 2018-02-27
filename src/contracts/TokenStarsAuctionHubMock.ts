@@ -3,14 +3,14 @@ import { BigNumber } from 'bignumber.js';
 import { W3, SoltsiceContract } from 'soltsice';
 
 /**
- * TokenStarsAuctionHub API
+ * TokenStarsAuctionHubMock API
  */
-export class TokenStarsAuctionHub extends SoltsiceContract {
-    public static get Artifacts() { return require('../artifacts/TokenStarsAuctionHub.json'); }
+export class TokenStarsAuctionHubMock extends SoltsiceContract {
+    public static get Artifacts() { return require('../artifacts/TokenStarsAuctionHubMock.json'); }
 
     public static get BytecodeHash() {
         // we need this before ctor, but artifacts are static and we cannot pass it to the base class, so need to generate
-        let artifacts = TokenStarsAuctionHub.Artifacts;
+        let artifacts = TokenStarsAuctionHubMock.Artifacts;
         if (!artifacts || !artifacts.bytecode) {
             return undefined;
         }
@@ -19,52 +19,52 @@ export class TokenStarsAuctionHub extends SoltsiceContract {
     }
 
     // tslint:disable-next-line:max-line-length
-    public static async New(deploymentParams: W3.TX.TxParams, ctorParams?: {}, w3?: W3, link?: SoltsiceContract[], privateKey?: string): Promise<TokenStarsAuctionHub> {
+    public static async New(deploymentParams: W3.TX.TxParams, ctorParams?: {_wallet: string, _tokens: string[]}, w3?: W3, link?: SoltsiceContract[], privateKey?: string): Promise<TokenStarsAuctionHubMock> {
         w3 = w3 || W3.Default;
         if (!privateKey) {
-            let contract = new TokenStarsAuctionHub(deploymentParams, ctorParams, w3, link);
+            let contract = new TokenStarsAuctionHubMock(deploymentParams, ctorParams, w3, link);
             await contract._instancePromise;
             return contract;
         } else {
-            let data = TokenStarsAuctionHub.NewData(ctorParams, w3);
+            let data = TokenStarsAuctionHubMock.NewData(ctorParams, w3);
             let txHash = await w3.sendSignedTransaction(W3.zeroAddress, privateKey, data, deploymentParams);
             let txReceipt = await w3.waitTransactionReceipt(txHash);
             let rawAddress = txReceipt.contractAddress;
-            let contract = await TokenStarsAuctionHub.At(rawAddress, w3);
+            let contract = await TokenStarsAuctionHubMock.At(rawAddress, w3);
             return contract;
         }
     }
 
-    public static async At(address: string | object, w3?: W3): Promise<TokenStarsAuctionHub> {
-        let contract = new TokenStarsAuctionHub(address, undefined, w3, undefined);
+    public static async At(address: string | object, w3?: W3): Promise<TokenStarsAuctionHubMock> {
+        let contract = new TokenStarsAuctionHubMock(address, undefined, w3, undefined);
         await contract._instancePromise;
         return contract;
     }
 
-    public static async Deployed(w3?: W3): Promise<TokenStarsAuctionHub> {
-        let contract = new TokenStarsAuctionHub('', undefined, w3, undefined);
+    public static async Deployed(w3?: W3): Promise<TokenStarsAuctionHubMock> {
+        let contract = new TokenStarsAuctionHubMock('', undefined, w3, undefined);
         await contract._instancePromise;
         return contract;
     }
 
     // tslint:disable-next-line:max-line-length
-    public static NewData(ctorParams?: {}, w3?: W3): string {
+    public static NewData(ctorParams?: {_wallet: string, _tokens: string[]}, w3?: W3): string {
         // tslint:disable-next-line:max-line-length
-        let data = SoltsiceContract.NewDataImpl(w3, TokenStarsAuctionHub.Artifacts, ctorParams ? [] : []);
+        let data = SoltsiceContract.NewDataImpl(w3, TokenStarsAuctionHubMock.Artifacts, ctorParams ? [ctorParams!._wallet, ctorParams!._tokens] : []);
         return data;
     }
 
     protected constructor(
         deploymentParams: string | W3.TX.TxParams | object,
-        ctorParams?: {},
+        ctorParams?: {_wallet: string, _tokens: string[]},
         w3?: W3,
         link?: SoltsiceContract[]
     ) {
         // tslint:disable-next-line:max-line-length
         super(
             w3,
-            TokenStarsAuctionHub.Artifacts,
-            ctorParams ? [] : [],
+            TokenStarsAuctionHubMock.Artifacts,
+            ctorParams ? [ctorParams!._wallet, ctorParams!._tokens] : [],
             deploymentParams,
             link
         );
@@ -301,17 +301,6 @@ export class TokenStarsAuctionHub extends SoltsiceContract {
                 });
             }
         });
-    
-    // tslint:disable-next-line:max-line-length
-    // tslint:disable-next-line:variable-name
-    public tokens(_0: BigNumber | number, txParams?: W3.TX.TxParams): Promise<string> {
-        return new Promise((resolve, reject) => {
-            this._instance.tokens
-                .call(_0, txParams || this._sendParams)
-                .then((res) => resolve(res))
-                .catch((err) => reject(err));
-        });
-    }
     
     // tslint:disable-next-line:member-ordering
     public withdraw = Object.assign(
@@ -589,17 +578,6 @@ export class TokenStarsAuctionHub extends SoltsiceContract {
         });
     }
     
-    // tslint:disable-next-line:max-line-length
-    // tslint:disable-next-line:variable-name
-    public ACE( txParams?: W3.TX.TxParams): Promise<string> {
-        return new Promise((resolve, reject) => {
-            this._instance.ACE
-                .call( txParams || this._sendParams)
-                .then((res) => resolve(res))
-                .catch((err) => reject(err));
-        });
-    }
-    
     // tslint:disable-next-line:member-ordering
     public bid = Object.assign(
         // tslint:disable-next-line:max-line-length
@@ -657,17 +635,6 @@ export class TokenStarsAuctionHub extends SoltsiceContract {
                 });
             }
         });
-    
-    // tslint:disable-next-line:max-line-length
-    // tslint:disable-next-line:variable-name
-    public TEAM( txParams?: W3.TX.TxParams): Promise<string> {
-        return new Promise((resolve, reject) => {
-            this._instance.TEAM
-                .call( txParams || this._sendParams)
-                .then((res) => resolve(res))
-                .catch((err) => reject(err));
-        });
-    }
     
     // tslint:disable-next-line:member-ordering
     public stringToBytes32 = Object.assign(
