@@ -99,11 +99,12 @@ server.post('/contract', opts, async (request, reply) => {
   const contractMethod = contract.methods[method](...args)
 
   // @ts-ignore
-  contractMethod.estimateGas({ gas: 5 * 1e6 }, (error, estimateGas) => {
-    if (error) {
-      console.log('ERR1', error);
-      return reply.send(error)
-    }
+  contractMethod.estimateGas({ gas: 5 * 1e9 }, (error, estimateGas) => {
+    // if (error) {
+    //   console.log('ERR1', estimateGas, error);
+    //   return reply.send(error)
+    // }
+    estimateGas = 150000;
 
     if (contractMethod._method.constant) {
       contractMethod.call({}, (error, result) => {

@@ -70,7 +70,7 @@ contract AceToken is MintableToken {
     function AceToken() {
       teamTokensHolder = msg.sender;
       communityTokensHolder = msg.sender;
-
+      
       ChangeTeamHolder(0x0, teamTokensHolder);
       ChangeCommunityHolder(0x0, communityTokensHolder);
     }

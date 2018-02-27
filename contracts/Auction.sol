@@ -49,7 +49,7 @@ contract AuctionHub is BotManageable {
 
         mapping(address => BidderState) bidderStates;
 
-        string item;
+        bytes32 item;
     }
 
     /*
@@ -131,9 +131,19 @@ contract AuctionHub is BotManageable {
             require(_tokens[i] != 0x0);
             require(_rates[i] > 0);
             ERC20Basic token = ERC20Basic(_tokens[i]);
-            require(token.totalSupply() > 0);
             tokenRates[token] = TokenRate(_rates[i], _decimals[i]);
             TokenRateUpdate(token, _rates[i]);
+        }
+    }
+
+    function stringToBytes32(string memory source) returns (bytes32 result) {
+        bytes memory tempEmptyStringTest = bytes(source);
+        if (tempEmptyStringTest.length == 0) {
+            return 0x0;
+        }
+
+        assembly {
+            result := mload(add(source, 32))
         }
     }
 
@@ -149,7 +159,7 @@ contract AuctionHub is BotManageable {
         returns (address)
     {
         require (_endSeconds > now);
-        require(_maxTokenBidInEther <= 1000);
+        require(_maxTokenBidInEther <= 1000 ether);
         require(_minPrice > 0);
 
         Auction auction = new Auction(this, wallet);
@@ -160,7 +170,8 @@ contract AuctionHub is BotManageable {
         auctionState.maxTokenBidInEther = _maxTokenBidInEther;
         auctionState.minPrice = _minPrice;
         auctionState.allowManagedBids = _allowManagedBids;
-        auctionState.item = _item;
+        string memory item = _item;
+        auctionState.item = stringToBytes32(item);
 
         NewAction(auction, _item);
         return address(auction);
@@ -189,7 +200,9 @@ contract AuctionHub is BotManageable {
         uint256 totalBid;
         if (_tokensNumber > 0) {
             totalBid = tokenBid(msg.sender, _bidder,  _token, _tokensNumber);
-        } else {
+        }else {
+            // NB if current token bid == 0 we still could have previous token bids
+            totalBid = bidderState.tokensBalanceInEther;
             require(_value > 0);
         }
 
@@ -248,7 +261,7 @@ contract AuctionHub is BotManageable {
         bidderState.tokenBalances[index].value += _tokensNumber;
 
         // tokenRate.value is for a whole/big token (e.g. ether vs. wei) but _tokensNumber is in small/wei tokens, need to divide by decimals
-        totalBid = totalBid + _tokensNumber.mul(tokenRate.value).sub(10 ** tokenRate.decimals);
+        totalBid = totalBid + _tokensNumber.mul(tokenRate.value).div(10 ** tokenRate.decimals);
         require(totalBid <= auctionState.maxTokenBidInEther);
 
         bidderState.tokensBalanceInEther = totalBid;
@@ -493,19 +506,12 @@ contract Auction {
         return owner.managedBid(_managedBidder, _managedBid, _knownManagedBidder);
     }
 
-    function totalDirectBid(address _bidder)
-        public
-        returns (uint256 _totalBid)
-    {
-        return owner.totalDirectBid(this, _bidder);
-    }
-
     function sendTokens(address _token, address _to, uint256 _amount)
         onlyOwner
         public
         returns (bool)
     {
-        return ERC20Basic(_token).transfer(msg.sender, _amount);
+        return ERC20Basic(_token).transfer(_to, _amount);
     }
 
     function sendEther(address _to, uint256 _amount)
@@ -538,6 +544,116 @@ contract Auction {
     {
         return  owner.cancel();
     }
+
+    function totalDirectBid(address _bidder)
+        public
+        view
+        returns (uint256)
+    {
+        return owner.totalDirectBid(this, _bidder);
+    }
+
+    function maxTokenBidInEther()
+        public
+        view
+        returns (uint256)
+    {
+        var (,maxTokenBidInEther,,,,,,,,) = owner.auctionStates(this);
+        return maxTokenBidInEther;
+    }
+
+    function endSeconds()
+        public
+        view
+        returns (uint256)
+    {
+        var (endSeconds,,,,,,,,,) = owner.auctionStates(this);
+        return endSeconds;
+    }
+
+    function item()
+        public
+        view
+        returns (string)
+    {
+        var (,,,,,,,,,item) = owner.auctionStates(this);
+        bytes memory bytesArray = new bytes(32);
+        for (uint256 i; i < 32; i++) {
+            bytesArray[i] = item[i];
+            }
+        return string(bytesArray);
+    }
+
+    function minPrice()
+        public
+        view
+        returns (uint256)
+    {
+        var (,,minPrice,,,,,,,) = owner.auctionStates(this);
+        return minPrice;
+    }
+
+    function cancelled()
+        public
+        view
+        returns (bool)
+    {
+        var (,,,,,,cancelled,,,) = owner.auctionStates(this);
+        return cancelled;
+    }
+
+    function finalized()
+        public
+        view
+        returns (bool)
+    {
+        var (,,,,,,,finalized,,) = owner.auctionStates(this);
+        return finalized;
+    }
+
+    function highestBid()
+        public
+        view
+        returns (uint256)
+    {
+        var (,,,highestBid,,,,,,) = owner.auctionStates(this);
+        return highestBid;
+    }
+
+    function highestBidder()
+        public
+        view
+        returns (address)
+    {
+        var (,,,,highestBidder,,,,,) = owner.auctionStates(this);
+        return highestBidder;
+    }
+
+    function highestManagedBidder()
+        public
+        view
+        returns (uint64)
+    {
+        var (,,,,,highestManagedBidder,,,,) = owner.auctionStates(this);
+        return highestManagedBidder;
+    }
+
+    function allowManagedBids()
+        public
+        view
+        returns (bool)
+    {
+        var (,,,,,,allowManagedBids,,,) = owner.auctionStates(this);
+        return allowManagedBids;
+    }
+
+
+    // mapping(address => uint256) public etherBalances;
+    // mapping(address => uint256) public tokenBalances;
+    // mapping(address => uint256) public tokenBalancesInEther;
+    // mapping(address => uint256) public managedBids;
+    
+    // bool allowManagedBids;
 }
 
 
