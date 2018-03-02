@@ -1,97 +1,11 @@
 {
-  "contractName": "MultiOwnable",
+  "contractName": "WalletBasic",
   "abi": [
     {
       "constant": false,
-      "inputs": [],
-      "name": "unpause",
-      "outputs": [],
-      "payable": false,
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "constant": true,
-      "inputs": [],
-      "name": "wallet",
-      "outputs": [
-        {
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "payable": false,
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "constant": true,
-      "inputs": [],
-      "name": "paused",
-      "outputs": [
-        {
-          "name": "",
-          "type": "bool"
-        }
-      ],
-      "payable": false,
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "constant": false,
-      "inputs": [],
-      "name": "pause",
-      "outputs": [],
-      "payable": false,
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
       "inputs": [
         {
-          "name": "_wallet",
-          "type": "address"
-        }
-      ],
-      "payable": false,
-      "stateMutability": "nonpayable",
-      "type": "constructor"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "name": "_contract",
-          "type": "address"
-        },
-        {
-          "indexed": true,
-          "name": "_wallet",
-          "type": "address"
-        }
-      ],
-      "name": "MultiOwnableWalletSet",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [],
-      "name": "Pause",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [],
-      "name": "Unpause",
-      "type": "event"
-    },
-    {
-      "constant": true,
-      "inputs": [
-        {
-          "name": "_address",
+          "name": "owner",
           "type": "address"
         }
       ],
@@ -103,14 +17,14 @@
         }
       ],
       "payable": false,
-      "stateMutability": "view",
+      "stateMutability": "nonpayable",
       "type": "function"
     }
   ],
-  "bytecode": "0x60606040526000805460a060020a60ff0219169055341561001f57600080fd5b60405160208061039b8339810160405280805160008054600160a060020a031916600160a060020a0383811691909117918290559193508116915030167fafcdd415329178553b69a5c7b7ece5d86014afa3335a808a26f32110981061a760405160405180910390a350610303806100986000396000f30060606040526004361061006c5763ffffffff7c01000000000000000000000000000000000000000000000000000000006000350416632f54bf6e81146100715780633f4ba83a146100a4578063521eb273146100b95780635c975abb146100e85780638456cb59146100fb575b600080fd5b341561007c57600080fd5b610090600160a060020a036004351661010e565b604051901515815260200160405180910390f35b34156100af57600080fd5b6100b76101bc565b005b34156100c457600080fd5b6100cc61023b565b604051600160a060020a03909116815260200160405180910390f35b34156100f357600080fd5b61009061024a565b341561010657600080fd5b6100b761025a565b60008054600160a060020a03838116911614806101b6575060008054600160a060020a031690632f54bf6e908490604051602001526040517c010000000000000000000000000000000000000000000000000000000063ffffffff8416028152600160a060020a039091166004820152602401602060405180830381600087803b151561019a57600080fd5b6102c65a03f115156101ab57600080fd5b505050604051805190505b92915050565b60005433600160a060020a039081169116146101d757600080fd5b60005460a060020a900460ff1615156101ef57600080fd5b6000805474ff0000000000000000000000000000000000000000191690557f7805862f689e2f13df9f062ff482ad3ad112aca9e0847911ed832e158c525b3360405160405180910390a1565b600054600160a060020a031681565b60005460a060020a900460ff1681565b6102633361010e565b151561026e57600080fd5b60005460a060020a900460ff161561028557600080fd5b6000805474ff0000000000000000000000000000000000000000191660a060020a1790557f6985a02210a168e66602d3235cb6db0e70f92b3ba4d376a33c0f3d9434bff62560405160405180910390a15600a165627a7a72305820250dca895d931b218e668e438d491329c7ffebfd34712108ad6f2794bfa1165d0029",
-  "deployedBytecode": "0x60606040526004361061006c5763ffffffff7c01000000000000000000000000000000000000000000000000000000006000350416632f54bf6e81146100715780633f4ba83a146100a4578063521eb273146100b95780635c975abb146100e85780638456cb59146100fb575b600080fd5b341561007c57600080fd5b610090600160a060020a036004351661010e565b604051901515815260200160405180910390f35b34156100af57600080fd5b6100b76101bc565b005b34156100c457600080fd5b6100cc61023b565b604051600160a060020a03909116815260200160405180910390f35b34156100f357600080fd5b61009061024a565b341561010657600080fd5b6100b761025a565b60008054600160a060020a03838116911614806101b6575060008054600160a060020a031690632f54bf6e908490604051602001526040517c010000000000000000000000000000000000000000000000000000000063ffffffff8416028152600160a060020a039091166004820152602401602060405180830381600087803b151561019a57600080fd5b6102c65a03f115156101ab57600080fd5b505050604051805190505b92915050565b60005433600160a060020a039081169116146101d757600080fd5b60005460a060020a900460ff1615156101ef57600080fd5b6000805474ff0000000000000000000000000000000000000000191690557f7805862f689e2f13df9f062ff482ad3ad112aca9e0847911ed832e158c525b3360405160405180910390a1565b600054600160a060020a031681565b60005460a060020a900460ff1681565b6102633361010e565b151561026e57600080fd5b60005460a060020a900460ff161561028557600080fd5b6000805474ff0000000000000000000000000000000000000000191660a060020a1790557f6985a02210a168e66602d3235cb6db0e70f92b3ba4d376a33c0f3d9434bff62560405160405180910390a15600a165627a7a72305820250dca895d931b218e668e438d491329c7ffebfd34712108ad6f2794bfa1165d0029",
-  "sourceMap": "251:1932:4:-;;;1305:5;1284:26;;-1:-1:-1;;;;;;1284:26:4;;;412:165;;;;;;;;;;;;;;;;;;;;;;494:6;:29;;-1:-1:-1;;;;;;494:29:4;-1:-1:-1;;;;;494:29:4;;;;;;;;;;;;;-1:-1:-1;562:6:4;;;-1:-1:-1;556:4:4;534:35;;;;;;;;;;;412:165;251:1932;;;;;;",
-  "deployedSourceMap": "251:1932:4:-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;922:293;;;;;;;;;;-1:-1:-1;;;;;922:293:4;;;;;;;;;;;;;;;;;;;;;;2046:134;;;;;;;;;;;;;;286:25;;;;;;;;;;;;;;;-1:-1:-1;;;;;286:25:4;;;;;;;;;;;;;;1284:26;;;;;;;;;;;;1809:133;;;;;;;;;;;;922:293;1009:4;1161:6;;-1:-1:-1;;;;;1161:18:4;;;:6;;:18;;:46;;-1:-1:-1;1183:6:4;;;-1:-1:-1;;;;;1183:6:4;;:14;;1198:8;;1183:24;;;;;;;;;;;;;;-1:-1:-1;;;;;1183:24:4;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;1161:46;1154:53;922:293;-1:-1:-1;;922:293:4:o;2046:134::-;680:6;;690:10;-1:-1:-1;;;;;680:20:4;;;:6;;:20;672:29;;;;;;1688:6;;-1:-1:-1;;;1688:6:4;;;;1680:15;;;;;;;;2147:5;2138:14;;-1:-1:-1;;2138:14:4;;;2163:9;;;;;;;;;;2046:134::o;286:25::-;;;-1:-1:-1;;;;;286:25:4;;:::o;1284:26::-;;;-1:-1:-1;;;1284:26:4;;;;;:::o;1809:133::-;874:19;882:10;874:7;:19::i;:::-;865:29;;;;;;;;1512:6;;-1:-1:-1;;;1512:6:4;;;;1511:7;1503:16;;;;;;1903:6;:13;;-1:-1:-1;;1903:13:4;-1:-1:-1;;;1903:13:4;;;1927:7;;;;;;;;;;1809:133::o",
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "sourceMap": "",
+  "deployedSourceMap": "",
   "source": "pragma solidity ^0.4.18;\r\n\r\n/*\r\n * A minimum multisig wallet interface. Compatible with MultiSigWallet by Gnosis.\r\n */\r\ncontract WalletBasic {\r\n    function isOwner(address owner) public returns (bool);\r\n}\r\n\r\n/**\r\n * @dev MultiOwnable contract.\r\n */\r\ncontract MultiOwnable {\r\n    \r\n    WalletBasic public wallet;\r\n    \r\n    event MultiOwnableWalletSet(address indexed _contract, address indexed _wallet);\r\n\r\n    function MultiOwnable \r\n        (address _wallet)\r\n        public\r\n    {\r\n        wallet = WalletBasic(_wallet);\r\n        MultiOwnableWalletSet(this, wallet);\r\n    }\r\n\r\n    /** Check if a caller is the MultiSig wallet. */\r\n    modifier onlyWallet() {\r\n        require(wallet == msg.sender);\r\n        _;\r\n    }\r\n\r\n    /** Check if a caller is one of the current owners of the MultiSig wallet or the wallet itself. */\r\n    modifier onlyOwner() {\r\n        require (isOwner(msg.sender));\r\n        _;\r\n    }\r\n\r\n    function isOwner(address _address) \r\n        public\r\n        constant\r\n        returns(bool)\r\n    {\r\n        // NB due to lazy eval wallet could be a normal address and isOwner won't be called if the first condition is met\r\n        return wallet == _address || wallet.isOwner(_address);\r\n    }\r\n\r\n\r\n    /* PAUSABLE with upause callable only by wallet */ \r\n\r\n    bool public paused = false;\r\n\r\n    event Pause();\r\n    event Unpause();\r\n\r\n    /**\r\n    * @dev Modifier to make a function callable only when the contract is not paused.\r\n    */\r\n    modifier whenNotPaused() {\r\n        require(!paused);\r\n        _;\r\n    }\r\n\r\n    /**\r\n    * @dev Modifier to make a function callable only when the contract is paused.\r\n    */\r\n    modifier whenPaused() {\r\n        require(paused);\r\n        _;\r\n    }\r\n\r\n    /**\r\n    * @dev called by any MSW owner to pause, triggers stopped state\r\n    */\r\n    function pause() \r\n        onlyOwner\r\n        whenNotPaused \r\n        public \r\n    {\r\n        paused = true;\r\n        Pause();\r\n    }\r\n\r\n    /**\r\n    * @dev called by the MSW (all owners) to unpause, returns to normal state\r\n    */\r\n    function unpause() \r\n        onlyWallet\r\n        whenPaused\r\n        public\r\n    {\r\n        paused = false;\r\n        Unpause();\r\n    }\r\n}\r\n",
   "sourcePath": "soltsice\\contracts\\MultiOwnable.sol",
   "ast": {
@@ -1850,5 +1764,5 @@
   },
   "networks": {},
   "schemaVersion": "1.0.1",
-  "updatedAt": "2018-02-28T13:51:17.615Z"
+  "updatedAt": "2018-02-28T13:51:17.616Z"
 }

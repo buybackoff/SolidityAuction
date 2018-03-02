@@ -181,9 +181,10 @@ contract AuctionHub is BotManageable {
         payable
         public
     {
+        throw;
         // It's charity!
-        require(wallet.send(msg.value));
-        Charity(0x0, msg.sender, msg.value, 0);
+        // require(wallet.send(msg.value));
+        // Charity(0x0, msg.sender, msg.value, 0);
     }
 
     function bid(address _bidder, uint256 _value, address _token, uint256 _tokensNumber)
@@ -651,64 +652,3 @@ contract Auction {
     
     // bool allowManagedBids;
 }
-
-
-// library AuctionFactory {
-
-//     event AuctionProduced(address indexed addr, string _item);
-
-//     function produce(
-//         address _wallet, 
-//         uint _endSeconds, 
-//         uint256 _weiPerToken, 
-//         uint256 _maxTokens, 
-//         string _item, 
-//         uint256 _minPrice, 
-//         bool _allowManagedBids
-//     )
-//         public
-//         returns (address)
-//     {
-//         address addr = new Auction(msg.sender, _wallet, 0x06147110022B768BA8F99A8f385df11a151A9cc8, _endSeconds, _weiPerToken, _maxTokens, _item, _minPrice, _allowManagedBids);
-//         AuctionProduced(addr, _item);
-//         return addr;
-//     }
-
-//     function produceForOwner(
-//         address _owner, 
-//         address _wallet, 
-//         uint _endSeconds, 
-//         uint256 _weiPerToken, 
-//         uint256 _maxTokens, 
-//         string _item, 
-//         uint256 _minPrice, 
-//         bool _allowManagedBids
-//     )
-//         public
-//         returns (address)
-//     {
-//         address addr = new Auction(_owner, _wallet, 0x06147110022B768BA8F99A8f385df11a151A9cc8, _endSeconds, _weiPerToken, _maxTokens, _item, _minPrice, _allowManagedBids);
-//         AuctionProduced(addr, _item);
-//         return addr;
-//     }
-
-//     // token for testing
-//     function produceForOwnerCustomToken(
-//         address _owner, 
-//         address _wallet, 
-//         address _token,
-//         uint _endSeconds, 
-//         uint256 _weiPerToken, 
-//         uint256 _maxTokens, 
-//         string _item, 
-//         uint256 _minPrice, 
-//         bool _allowManagedBids
-//     )
-//         public
-//         returns (address)
-//     {
-//         address addr = new Auction(_owner, _wallet, _token, _endSeconds, _weiPerToken, _maxTokens, _item, _minPrice, _allowManagedBids);
-//         AuctionProduced(addr, _item);
-//         return addr;
-//     }
-// }

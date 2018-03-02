@@ -6,7 +6,8 @@
         "declaration": true,
         "lib": [
             "es6",
-            "dom"
+            "dom",
+            "esnext"
         ],
         "sourceMap": true,
         "allowJs": false,
@@ -21,7 +22,8 @@
         "noUnusedLocals": false,
         "experimentalDecorators": true,
         "noEmit": false,
-        "inlineSources": true
+        "inlineSources": true,
+        "downlevelIteration": true
     },
     "exclude": [
         "node_modules",

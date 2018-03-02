@@ -1,6 +1,7 @@
 {
-    "web3": "http://pub-node1.etherscan.io:8545",
+    "web3": "https://rinkeby.infura.io/[INFURA_KEY]",
     "privateKey": "",
-    "networkId": 1,
-    "gasPrice": 2000000000
+    "networkId": 4,
+    "gasPrice": 20000000000,
+    "hubAddress": ""
 }

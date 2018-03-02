@@ -6,11 +6,11 @@ import { W3, SoltsiceContract } from 'soltsice';
  * BotManageable API
  */
 export class BotManageable extends SoltsiceContract {
-    public static get Artifacts() { return require('../artifacts/BotManageable.json'); }
+    public static get artifacts() { return require('../artifacts/BotManageable.json'); }
 
-    public static get BytecodeHash() {
+    public static get bytecodeHash() {
         // we need this before ctor, but artifacts are static and we cannot pass it to the base class, so need to generate
-        let artifacts = BotManageable.Artifacts;
+        let artifacts = BotManageable.artifacts;
         if (!artifacts || !artifacts.bytecode) {
             return undefined;
         }
@@ -19,38 +19,38 @@ export class BotManageable extends SoltsiceContract {
     }
 
     // tslint:disable-next-line:max-line-length
-    public static async New(deploymentParams: W3.TX.TxParams, ctorParams?: {_wallet: string}, w3?: W3, link?: SoltsiceContract[], privateKey?: string): Promise<BotManageable> {
-        w3 = w3 || W3.Default;
+    public static async new(deploymentParams: W3.TX.TxParams, ctorParams?: {_wallet: string}, w3?: W3, link?: SoltsiceContract[], privateKey?: string): Promise<BotManageable> {
+        w3 = w3 || W3.default;
         if (!privateKey) {
             let contract = new BotManageable(deploymentParams, ctorParams, w3, link);
             await contract._instancePromise;
             return contract;
         } else {
-            let data = BotManageable.NewData(ctorParams, w3);
+            let data = BotManageable.newData(ctorParams, w3);
             let txHash = await w3.sendSignedTransaction(W3.zeroAddress, privateKey, data, deploymentParams);
             let txReceipt = await w3.waitTransactionReceipt(txHash);
             let rawAddress = txReceipt.contractAddress;
-            let contract = await BotManageable.At(rawAddress, w3);
+            let contract = await BotManageable.at(rawAddress, w3);
             return contract;
         }
     }
 
-    public static async At(address: string | object, w3?: W3): Promise<BotManageable> {
+    public static async at(address: string | object, w3?: W3): Promise<BotManageable> {
         let contract = new BotManageable(address, undefined, w3, undefined);
         await contract._instancePromise;
         return contract;
     }
 
-    public static async Deployed(w3?: W3): Promise<BotManageable> {
+    public static async deployed(w3?: W3): Promise<BotManageable> {
         let contract = new BotManageable('', undefined, w3, undefined);
         await contract._instancePromise;
         return contract;
     }
 
     // tslint:disable-next-line:max-line-length
-    public static NewData(ctorParams?: {_wallet: string}, w3?: W3): string {
+    public static newData(ctorParams?: {_wallet: string}, w3?: W3): string {
         // tslint:disable-next-line:max-line-length
-        let data = SoltsiceContract.NewDataImpl(w3, BotManageable.Artifacts, ctorParams ? [ctorParams!._wallet] : []);
+        let data = SoltsiceContract.newDataImpl(w3, BotManageable.artifacts, ctorParams ? [ctorParams!._wallet] : []);
         return data;
     }
 
@@ -63,7 +63,7 @@ export class BotManageable extends SoltsiceContract {
         // tslint:disable-next-line:max-line-length
         super(
             w3,
-            BotManageable.Artifacts,
+            BotManageable.artifacts,
             ctorParams ? [ctorParams!._wallet] : [],
             deploymentParams,
             link
@@ -79,8 +79,8 @@ export class BotManageable extends SoltsiceContract {
         return new Promise((resolve, reject) => {
             this._instance.isOwner
                 .call(_address, txParams || this._sendParams)
-                .then((res) => resolve(res))
-                .catch((err) => reject(err));
+                .then((res: any) => resolve(res))
+                .catch((err: any) => reject(err));
         });
     }
     
@@ -92,8 +92,8 @@ export class BotManageable extends SoltsiceContract {
             if (!privateKey) {
                 return new Promise((resolve, reject) => {
                     this._instance.unpause( txParams || this._sendParams)
-                        .then((res) => resolve(res))
-                        .catch((err) => reject(err));
+                        .then((res: any) => resolve(res))
+                        .catch((err: any) => reject(err));
                 });
             } else {
                 // tslint:disable-next-line:max-line-length
@@ -109,8 +109,8 @@ export class BotManageable extends SoltsiceContract {
             sendTransaction: Object.assign(( txParams?: W3.TX.TxParams): Promise<string> => {
                     return new Promise((resolve, reject) => {
                         this._instance.unpause.sendTransaction( txParams || this._sendParams)
-                            .then((res) => resolve(res))
-                            .catch((err) => reject(err));
+                            .then((res: any) => resolve(res))
+                            .catch((err: any) => reject(err));
                     });
                 },
                 {
@@ -137,7 +137,7 @@ export class BotManageable extends SoltsiceContract {
             // tslint:disable-next-line:variable-name
             estimateGas: (): Promise<number> => {
                 return new Promise((resolve, reject) => {
-                    this._instance.unpause.estimateGas().then((g) => resolve(g));
+                    this._instance.unpause.estimateGas().then((g: any) => resolve(g));
                 });
             }
         });
@@ -148,8 +148,8 @@ export class BotManageable extends SoltsiceContract {
         return new Promise((resolve, reject) => {
             this._instance.wallet
                 .call( txParams || this._sendParams)
-                .then((res) => resolve(res))
-                .catch((err) => reject(err));
+                .then((res: any) => resolve(res))
+                .catch((err: any) => reject(err));
         });
     }
     
@@ -159,8 +159,8 @@ export class BotManageable extends SoltsiceContract {
         return new Promise((resolve, reject) => {
             this._instance.paused
                 .call( txParams || this._sendParams)
-                .then((res) => resolve(res))
-                .catch((err) => reject(err));
+                .then((res: any) => resolve(res))
+                .catch((err: any) => reject(err));
         });
     }
     
@@ -172,8 +172,8 @@ export class BotManageable extends SoltsiceContract {
             if (!privateKey) {
                 return new Promise((resolve, reject) => {
                     this._instance.pause( txParams || this._sendParams)
-                        .then((res) => resolve(res))
-                        .catch((err) => reject(err));
+                        .then((res: any) => resolve(res))
+                        .catch((err: any) => reject(err));
                 });
             } else {
                 // tslint:disable-next-line:max-line-length
@@ -189,8 +189,8 @@ export class BotManageable extends SoltsiceContract {
             sendTransaction: Object.assign(( txParams?: W3.TX.TxParams): Promise<string> => {
                     return new Promise((resolve, reject) => {
                         this._instance.pause.sendTransaction( txParams || this._sendParams)
-                            .then((res) => resolve(res))
-                            .catch((err) => reject(err));
+                            .then((res: any) => resolve(res))
+                            .catch((err: any) => reject(err));
                     });
                 },
                 {
@@ -217,7 +217,7 @@ export class BotManageable extends SoltsiceContract {
             // tslint:disable-next-line:variable-name
             estimateGas: (): Promise<number> => {
                 return new Promise((resolve, reject) => {
-                    this._instance.pause.estimateGas().then((g) => resolve(g));
+                    this._instance.pause.estimateGas().then((g: any) => resolve(g));
                 });
             }
         });
@@ -230,8 +230,8 @@ export class BotManageable extends SoltsiceContract {
             if (!privateKey) {
                 return new Promise((resolve, reject) => {
                     this._instance.enableBot(_botAddress, txParams || this._sendParams)
-                        .then((res) => resolve(res))
-                        .catch((err) => reject(err));
+                        .then((res: any) => resolve(res))
+                        .catch((err: any) => reject(err));
                 });
             } else {
                 // tslint:disable-next-line:max-line-length
@@ -247,8 +247,8 @@ export class BotManageable extends SoltsiceContract {
             sendTransaction: Object.assign((_botAddress: string, txParams?: W3.TX.TxParams): Promise<string> => {
                     return new Promise((resolve, reject) => {
                         this._instance.enableBot.sendTransaction(_botAddress, txParams || this._sendParams)
-                            .then((res) => resolve(res))
-                            .catch((err) => reject(err));
+                            .then((res: any) => resolve(res))
+                            .catch((err: any) => reject(err));
                     });
                 },
                 {
@@ -275,7 +275,7 @@ export class BotManageable extends SoltsiceContract {
             // tslint:disable-next-line:variable-name
             estimateGas: (_botAddress: string): Promise<number> => {
                 return new Promise((resolve, reject) => {
-                    this._instance.enableBot.estimateGas(_botAddress).then((g) => resolve(g));
+                    this._instance.enableBot.estimateGas(_botAddress).then((g: any) => resolve(g));
                 });
             }
         });
@@ -288,8 +288,8 @@ export class BotManageable extends SoltsiceContract {
             if (!privateKey) {
                 return new Promise((resolve, reject) => {
                     this._instance.disableBot(_botAddress, _fromTimeStampSeconds, txParams || this._sendParams)
-                        .then((res) => resolve(res))
-                        .catch((err) => reject(err));
+                        .then((res: any) => resolve(res))
+                        .catch((err: any) => reject(err));
                 });
             } else {
                 // tslint:disable-next-line:max-line-length
@@ -305,8 +305,8 @@ export class BotManageable extends SoltsiceContract {
             sendTransaction: Object.assign((_botAddress: string, _fromTimeStampSeconds: BigNumber | number, txParams?: W3.TX.TxParams): Promise<string> => {
                     return new Promise((resolve, reject) => {
                         this._instance.disableBot.sendTransaction(_botAddress, _fromTimeStampSeconds, txParams || this._sendParams)
-                            .then((res) => resolve(res))
-                            .catch((err) => reject(err));
+                            .then((res: any) => resolve(res))
+                            .catch((err: any) => reject(err));
                     });
                 },
                 {
@@ -333,7 +333,7 @@ export class BotManageable extends SoltsiceContract {
             // tslint:disable-next-line:variable-name
             estimateGas: (_botAddress: string, _fromTimeStampSeconds: BigNumber | number): Promise<number> => {
                 return new Promise((resolve, reject) => {
-                    this._instance.disableBot.estimateGas(_botAddress, _fromTimeStampSeconds).then((g) => resolve(g));
+                    this._instance.disableBot.estimateGas(_botAddress, _fromTimeStampSeconds).then((g: any) => resolve(g));
                 });
             }
         });
@@ -344,8 +344,8 @@ export class BotManageable extends SoltsiceContract {
         return new Promise((resolve, reject) => {
             this._instance.isBot
                 .call(_botAddress, txParams || this._sendParams)
-                .then((res) => resolve(res))
-                .catch((err) => reject(err));
+                .then((res: any) => resolve(res))
+                .catch((err: any) => reject(err));
         });
     }
     
@@ -355,8 +355,8 @@ export class BotManageable extends SoltsiceContract {
         return new Promise((resolve, reject) => {
             this._instance.isBotAt
                 .call(_botAddress, _atTimeStampSeconds, txParams || this._sendParams)
-                .then((res) => resolve(res))
-                .catch((err) => reject(err));
+                .then((res: any) => resolve(res))
+                .catch((err: any) => reject(err));
         });
     }
     

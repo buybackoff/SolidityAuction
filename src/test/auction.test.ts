@@ -17,7 +17,7 @@ let w3: W3 = new W3(Ganache.provider({
 // let address = W3.EthUtils.bufferToHex(W3.EthUtils.privateToAddress(new Buffer(testPrivateKeys[0], 'hex')));
 // console.log('CALCULATED ADDRESS', address);
 
-W3.Default = w3;
+W3.default = w3;
 let testrpc = new TestRPC(w3);
 
 // testnet account with some ether
@@ -70,15 +70,15 @@ beforeEach(async () => {
 
 it('Could deploy auction factory and create auction', async () => {
     
-    aceToken = await AceToken.New(maxGasParams, undefined, w3);
-    teamToken = await TeamToken.New(maxGasParams, undefined, w3);
+    aceToken = await AceToken.new(maxGasParams, undefined, w3);
+    teamToken = await TeamToken.new(maxGasParams, undefined, w3);
 
     let tokenAddress = await aceToken.address;
     console.log('TOKEN ADDRESS', tokenAddress);
 
     let minPrice = weiPerToken;
 
-    let hub = await AuctionHub.New(maxGasParams, {_wallet: activeAccount, _tokens: [aceToken.address, teamToken.address], _rates: [weiPerToken, weiPerToken], _decimals: [0, 4]}, w3);
+    let hub = await AuctionHub.new(maxGasParams, {_wallet: activeAccount, _tokens: [aceToken.address, teamToken.address], _rates: [weiPerToken, weiPerToken], _decimals: [0, 4]}, w3);
     console.log('FACTORY ADDRESS', await hub.address);
 
     expect(await hub.isBot(activeAccount)).toBe(true);
@@ -93,7 +93,7 @@ it('Could deploy auction factory and create auction', async () => {
 
     auctionAddress = args.auction;
 
-    let auction = await Auction.At(auctionAddress, w3);
+    let auction = await Auction.at(auctionAddress, w3);
 
     let actualAddress = await auction.address;
 
@@ -107,7 +107,7 @@ it('Could deploy auction factory and create auction', async () => {
 it('Could send manage bid', async () => {
 
     let bid = weiPerToken;
-    let auction = await Auction.At(auctionAddress, w3);
+    let auction = await Auction.at(auctionAddress, w3);
 
     console.log('SEND PARAMS', maxGasParams);
     let tx = await auction.managedBid(42, bid, maxGasParams);
@@ -126,7 +126,7 @@ it('Could extend end time', async () => {
     if (await w3.isTestRPC) {
         let bid = weiPerToken.add(1);
 
-        let auction = await Auction.At(auctionAddress, w3);
+        let auction = await Auction.at(auctionAddress, w3);
 
         let contractEnd = (await auction.endSeconds()).toNumber();
 
@@ -171,14 +171,20 @@ it('Could mint tokens and bid with them', async () => {
         let balance = await aceToken.balanceOf(tokenBidder);
         expect(balance.toNumber()).toBe(1000);
 
+        let mintedTx2 = await teamToken.mint(tokenBidder, initialTokenBidderBalance * 10000, maxGasParams);
+        console.log('MINTED TX2', mintedTx2);
+        
         let tokenBidderParams: W3.TX.TxParams = Object.assign({}, maxGasParams, { from: tokenBidder });
 
-        let approveTx = await aceToken.approve(auctionAddress, 100, tokenBidderParams);
-        console.log('APPROVE TX', approveTx);
+        let approveTxAce = await aceToken.approve(auctionAddress, 100, tokenBidderParams);
+        console.log('APPROVE TX ACE', approveTxAce);
+        let approveTxTeam = await teamToken.approve(auctionAddress, 500*10000, tokenBidderParams);
+        console.log('APPROVE TX TEAM', approveTxTeam);
+
         let allowance = await aceToken.allowance(tokenBidder, auctionAddress);
         console.log('ALLOWANCE', allowance.toNumber());
 
-        let auction = await Auction.At(auctionAddress, w3);
+        let auction = await Auction.at(auctionAddress, w3);
 
         try {
             let tokensNumber = maxTokensInEther.div(weiPerToken).add(1);
@@ -194,8 +200,17 @@ it('Could mint tokens and bid with them', async () => {
         console.log('TOKENS NUMBER: ', tokensNumber.toFormat());
         console.log('TOKENS NUMBER IN WEI: ', tokensNumber.mul(weiPerToken).toFormat());
         let highestBid0 = await auction.highestBid();
+
         console.log('HIGHEST BID0: ', highestBid0.toFixed());
-        let tx2 = await auction.bid(aceToken.address, tokensNumber, tokenBidderParamsWithValue);
+        
+        let txAce = await auction.bid(aceToken.address, tokensNumber.div(2), tokenBidderParamsWithValue);
+        console.log('TX ACE', txAce);
+
+        let tokenBidderParamsWithValue2 = Object.assign({}, tokenBidderParamsWithValue);
+        tokenBidderParamsWithValue2.value = 0;
+        let txTeam = await auction.bid(teamToken.address, tokensNumber.div(2).mul(10000), tokenBidderParamsWithValue2);
+        console.log('TX TEAM', txTeam);
+
         let highestBid = await auction.highestBid();
         console.log('HIGHEST BID: ', highestBid.toFixed());
         expect(highestBid).toEqual(maxTokensInEther);

@@ -99,7 +99,7 @@ curl --request POST \
   --url http://localhost:3000/contract \
   --header 'content-type: application/json' \
   --data '{"contract": "Auction",
-            "method": "managedBid",
+            "method": "managedBid2",
             "at": "0xHexOfAuctionAddress",
             "args": [42, 123000000000000000000, '0x39a0951b13931b5bA8d97EfF4b3F66696aDfF16F' ]}'
   

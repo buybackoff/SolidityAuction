@@ -6,11 +6,11 @@ import { W3, SoltsiceContract } from 'soltsice';
  * MintableToken API
  */
 export class MintableToken extends SoltsiceContract {
-    public static get Artifacts() { return require('../artifacts/MintableToken.json'); }
+    public static get artifacts() { return require('../artifacts/MintableToken.json'); }
 
-    public static get BytecodeHash() {
+    public static get bytecodeHash() {
         // we need this before ctor, but artifacts are static and we cannot pass it to the base class, so need to generate
-        let artifacts = MintableToken.Artifacts;
+        let artifacts = MintableToken.artifacts;
         if (!artifacts || !artifacts.bytecode) {
             return undefined;
         }
@@ -19,38 +19,38 @@ export class MintableToken extends SoltsiceContract {
     }
 
     // tslint:disable-next-line:max-line-length
-    public static async New(deploymentParams: W3.TX.TxParams, ctorParams?: {}, w3?: W3, link?: SoltsiceContract[], privateKey?: string): Promise<MintableToken> {
-        w3 = w3 || W3.Default;
+    public static async new(deploymentParams: W3.TX.TxParams, ctorParams?: {}, w3?: W3, link?: SoltsiceContract[], privateKey?: string): Promise<MintableToken> {
+        w3 = w3 || W3.default;
         if (!privateKey) {
             let contract = new MintableToken(deploymentParams, ctorParams, w3, link);
             await contract._instancePromise;
             return contract;
         } else {
-            let data = MintableToken.NewData(ctorParams, w3);
+            let data = MintableToken.newData(ctorParams, w3);
             let txHash = await w3.sendSignedTransaction(W3.zeroAddress, privateKey, data, deploymentParams);
             let txReceipt = await w3.waitTransactionReceipt(txHash);
             let rawAddress = txReceipt.contractAddress;
-            let contract = await MintableToken.At(rawAddress, w3);
+            let contract = await MintableToken.at(rawAddress, w3);
             return contract;
         }
     }
 
-    public static async At(address: string | object, w3?: W3): Promise<MintableToken> {
+    public static async at(address: string | object, w3?: W3): Promise<MintableToken> {
         let contract = new MintableToken(address, undefined, w3, undefined);
         await contract._instancePromise;
         return contract;
     }
 
-    public static async Deployed(w3?: W3): Promise<MintableToken> {
+    public static async deployed(w3?: W3): Promise<MintableToken> {
         let contract = new MintableToken('', undefined, w3, undefined);
         await contract._instancePromise;
         return contract;
     }
 
     // tslint:disable-next-line:max-line-length
-    public static NewData(ctorParams?: {}, w3?: W3): string {
+    public static newData(ctorParams?: {}, w3?: W3): string {
         // tslint:disable-next-line:max-line-length
-        let data = SoltsiceContract.NewDataImpl(w3, MintableToken.Artifacts, ctorParams ? [] : []);
+        let data = SoltsiceContract.newDataImpl(w3, MintableToken.artifacts, ctorParams ? [] : []);
         return data;
     }
 
@@ -63,7 +63,7 @@ export class MintableToken extends SoltsiceContract {
         // tslint:disable-next-line:max-line-length
         super(
             w3,
-            MintableToken.Artifacts,
+            MintableToken.artifacts,
             ctorParams ? [] : [],
             deploymentParams,
             link
@@ -79,8 +79,8 @@ export class MintableToken extends SoltsiceContract {
         return new Promise((resolve, reject) => {
             this._instance.mintingFinished
                 .call( txParams || this._sendParams)
-                .then((res) => resolve(res))
-                .catch((err) => reject(err));
+                .then((res: any) => resolve(res))
+                .catch((err: any) => reject(err));
         });
     }
     
@@ -92,8 +92,8 @@ export class MintableToken extends SoltsiceContract {
             if (!privateKey) {
                 return new Promise((resolve, reject) => {
                     this._instance.approve(_spender, _value, txParams || this._sendParams)
-                        .then((res) => resolve(res))
-                        .catch((err) => reject(err));
+                        .then((res: any) => resolve(res))
+                        .catch((err: any) => reject(err));
                 });
             } else {
                 // tslint:disable-next-line:max-line-length
@@ -109,8 +109,8 @@ export class MintableToken extends SoltsiceContract {
             sendTransaction: Object.assign((_spender: string, _value: BigNumber | number, txParams?: W3.TX.TxParams): Promise<string> => {
                     return new Promise((resolve, reject) => {
                         this._instance.approve.sendTransaction(_spender, _value, txParams || this._sendParams)
-                            .then((res) => resolve(res))
-                            .catch((err) => reject(err));
+                            .then((res: any) => resolve(res))
+                            .catch((err: any) => reject(err));
                     });
                 },
                 {
@@ -137,7 +137,7 @@ export class MintableToken extends SoltsiceContract {
             // tslint:disable-next-line:variable-name
             estimateGas: (_spender: string, _value: BigNumber | number): Promise<number> => {
                 return new Promise((resolve, reject) => {
-                    this._instance.approve.estimateGas(_spender, _value).then((g) => resolve(g));
+                    this._instance.approve.estimateGas(_spender, _value).then((g: any) => resolve(g));
                 });
             }
         });
@@ -148,8 +148,8 @@ export class MintableToken extends SoltsiceContract {
         return new Promise((resolve, reject) => {
             this._instance.totalSupply
                 .call( txParams || this._sendParams)
-                .then((res) => resolve(res))
-                .catch((err) => reject(err));
+                .then((res: any) => resolve(res))
+                .catch((err: any) => reject(err));
         });
     }
     
@@ -161,8 +161,8 @@ export class MintableToken extends SoltsiceContract {
             if (!privateKey) {
                 return new Promise((resolve, reject) => {
                     this._instance.transferFrom(_from, _to, _value, txParams || this._sendParams)
-                        .then((res) => resolve(res))
-                        .catch((err) => reject(err));
+                        .then((res: any) => resolve(res))
+                        .catch((err: any) => reject(err));
                 });
             } else {
                 // tslint:disable-next-line:max-line-length
@@ -178,8 +178,8 @@ export class MintableToken extends SoltsiceContract {
             sendTransaction: Object.assign((_from: string, _to: string, _value: BigNumber | number, txParams?: W3.TX.TxParams): Promise<string> => {
                     return new Promise((resolve, reject) => {
                         this._instance.transferFrom.sendTransaction(_from, _to, _value, txParams || this._sendParams)
-                            .then((res) => resolve(res))
-                            .catch((err) => reject(err));
+                            .then((res: any) => resolve(res))
+                            .catch((err: any) => reject(err));
                     });
                 },
                 {
@@ -206,7 +206,7 @@ export class MintableToken extends SoltsiceContract {
             // tslint:disable-next-line:variable-name
             estimateGas: (_from: string, _to: string, _value: BigNumber | number): Promise<number> => {
                 return new Promise((resolve, reject) => {
-                    this._instance.transferFrom.estimateGas(_from, _to, _value).then((g) => resolve(g));
+                    this._instance.transferFrom.estimateGas(_from, _to, _value).then((g: any) => resolve(g));
                 });
             }
         });
@@ -219,8 +219,8 @@ export class MintableToken extends SoltsiceContract {
             if (!privateKey) {
                 return new Promise((resolve, reject) => {
                     this._instance.decreaseApproval(_spender, _subtractedValue, txParams || this._sendParams)
-                        .then((res) => resolve(res))
-                        .catch((err) => reject(err));
+                        .then((res: any) => resolve(res))
+                        .catch((err: any) => reject(err));
                 });
             } else {
                 // tslint:disable-next-line:max-line-length
@@ -236,8 +236,8 @@ export class MintableToken extends SoltsiceContract {
             sendTransaction: Object.assign((_spender: string, _subtractedValue: BigNumber | number, txParams?: W3.TX.TxParams): Promise<string> => {
                     return new Promise((resolve, reject) => {
                         this._instance.decreaseApproval.sendTransaction(_spender, _subtractedValue, txParams || this._sendParams)
-                            .then((res) => resolve(res))
-                            .catch((err) => reject(err));
+                            .then((res: any) => resolve(res))
+                            .catch((err: any) => reject(err));
                     });
                 },
                 {
@@ -264,7 +264,7 @@ export class MintableToken extends SoltsiceContract {
             // tslint:disable-next-line:variable-name
             estimateGas: (_spender: string, _subtractedValue: BigNumber | number): Promise<number> => {
                 return new Promise((resolve, reject) => {
-                    this._instance.decreaseApproval.estimateGas(_spender, _subtractedValue).then((g) => resolve(g));
+                    this._instance.decreaseApproval.estimateGas(_spender, _subtractedValue).then((g: any) => resolve(g));
                 });
             }
         });
@@ -275,8 +275,8 @@ export class MintableToken extends SoltsiceContract {
         return new Promise((resolve, reject) => {
             this._instance.balanceOf
                 .call(_owner, txParams || this._sendParams)
-                .then((res) => resolve(res))
-                .catch((err) => reject(err));
+                .then((res: any) => resolve(res))
+                .catch((err: any) => reject(err));
         });
     }
     
@@ -286,8 +286,8 @@ export class MintableToken extends SoltsiceContract {
         return new Promise((resolve, reject) => {
             this._instance.owner
                 .call( txParams || this._sendParams)
-                .then((res) => resolve(res))
-                .catch((err) => reject(err));
+                .then((res: any) => resolve(res))
+                .catch((err: any) => reject(err));
         });
     }
     
@@ -299,8 +299,8 @@ export class MintableToken extends SoltsiceContract {
             if (!privateKey) {
                 return new Promise((resolve, reject) => {
                     this._instance.transfer(_to, _value, txParams || this._sendParams)
-                        .then((res) => resolve(res))
-                        .catch((err) => reject(err));
+                        .then((res: any) => resolve(res))
+                        .catch((err: any) => reject(err));
                 });
             } else {
                 // tslint:disable-next-line:max-line-length
@@ -316,8 +316,8 @@ export class MintableToken extends SoltsiceContract {
             sendTransaction: Object.assign((_to: string, _value: BigNumber | number, txParams?: W3.TX.TxParams): Promise<string> => {
                     return new Promise((resolve, reject) => {
                         this._instance.transfer.sendTransaction(_to, _value, txParams || this._sendParams)
-                            .then((res) => resolve(res))
-                            .catch((err) => reject(err));
+                            .then((res: any) => resolve(res))
+                            .catch((err: any) => reject(err));
                     });
                 },
                 {
@@ -344,7 +344,7 @@ export class MintableToken extends SoltsiceContract {
             // tslint:disable-next-line:variable-name
             estimateGas: (_to: string, _value: BigNumber | number): Promise<number> => {
                 return new Promise((resolve, reject) => {
-                    this._instance.transfer.estimateGas(_to, _value).then((g) => resolve(g));
+                    this._instance.transfer.estimateGas(_to, _value).then((g: any) => resolve(g));
                 });
             }
         });
@@ -357,8 +357,8 @@ export class MintableToken extends SoltsiceContract {
             if (!privateKey) {
                 return new Promise((resolve, reject) => {
                     this._instance.increaseApproval(_spender, _addedValue, txParams || this._sendParams)
-                        .then((res) => resolve(res))
-                        .catch((err) => reject(err));
+                        .then((res: any) => resolve(res))
+                        .catch((err: any) => reject(err));
                 });
             } else {
                 // tslint:disable-next-line:max-line-length
@@ -374,8 +374,8 @@ export class MintableToken extends SoltsiceContract {
             sendTransaction: Object.assign((_spender: string, _addedValue: BigNumber | number, txParams?: W3.TX.TxParams): Promise<string> => {
                     return new Promise((resolve, reject) => {
                         this._instance.increaseApproval.sendTransaction(_spender, _addedValue, txParams || this._sendParams)
-                            .then((res) => resolve(res))
-                            .catch((err) => reject(err));
+                            .then((res: any) => resolve(res))
+                            .catch((err: any) => reject(err));
                     });
                 },
                 {
@@ -402,7 +402,7 @@ export class MintableToken extends SoltsiceContract {
             // tslint:disable-next-line:variable-name
             estimateGas: (_spender: string, _addedValue: BigNumber | number): Promise<number> => {
                 return new Promise((resolve, reject) => {
-                    this._instance.increaseApproval.estimateGas(_spender, _addedValue).then((g) => resolve(g));
+                    this._instance.increaseApproval.estimateGas(_spender, _addedValue).then((g: any) => resolve(g));
                 });
             }
         });
@@ -413,8 +413,8 @@ export class MintableToken extends SoltsiceContract {
         return new Promise((resolve, reject) => {
             this._instance.allowance
                 .call(_owner, _spender, txParams || this._sendParams)
-                .then((res) => resolve(res))
-                .catch((err) => reject(err));
+                .then((res: any) => resolve(res))
+                .catch((err: any) => reject(err));
         });
     }
     
@@ -426,8 +426,8 @@ export class MintableToken extends SoltsiceContract {
             if (!privateKey) {
                 return new Promise((resolve, reject) => {
                     this._instance.transferOwnership(newOwner, txParams || this._sendParams)
-                        .then((res) => resolve(res))
-                        .catch((err) => reject(err));
+                        .then((res: any) => resolve(res))
+                        .catch((err: any) => reject(err));
                 });
             } else {
                 // tslint:disable-next-line:max-line-length
@@ -443,8 +443,8 @@ export class MintableToken extends SoltsiceContract {
             sendTransaction: Object.assign((newOwner: string, txParams?: W3.TX.TxParams): Promise<string> => {
                     return new Promise((resolve, reject) => {
                         this._instance.transferOwnership.sendTransaction(newOwner, txParams || this._sendParams)
-                            .then((res) => resolve(res))
-                            .catch((err) => reject(err));
+                            .then((res: any) => resolve(res))
+                            .catch((err: any) => reject(err));
                     });
                 },
                 {
@@ -471,7 +471,7 @@ export class MintableToken extends SoltsiceContract {
             // tslint:disable-next-line:variable-name
             estimateGas: (newOwner: string): Promise<number> => {
                 return new Promise((resolve, reject) => {
-                    this._instance.transferOwnership.estimateGas(newOwner).then((g) => resolve(g));
+                    this._instance.transferOwnership.estimateGas(newOwner).then((g: any) => resolve(g));
                 });
             }
         });
@@ -484,8 +484,8 @@ export class MintableToken extends SoltsiceContract {
             if (!privateKey) {
                 return new Promise((resolve, reject) => {
                     this._instance.mint(_to, _amount, txParams || this._sendParams)
-                        .then((res) => resolve(res))
-                        .catch((err) => reject(err));
+                        .then((res: any) => resolve(res))
+                        .catch((err: any) => reject(err));
                 });
             } else {
                 // tslint:disable-next-line:max-line-length
@@ -501,8 +501,8 @@ export class MintableToken extends SoltsiceContract {
             sendTransaction: Object.assign((_to: string, _amount: BigNumber | number, txParams?: W3.TX.TxParams): Promise<string> => {
                     return new Promise((resolve, reject) => {
                         this._instance.mint.sendTransaction(_to, _amount, txParams || this._sendParams)
-                            .then((res) => resolve(res))
-                            .catch((err) => reject(err));
+                            .then((res: any) => resolve(res))
+                            .catch((err: any) => reject(err));
                     });
                 },
                 {
@@ -529,7 +529,7 @@ export class MintableToken extends SoltsiceContract {
             // tslint:disable-next-line:variable-name
             estimateGas: (_to: string, _amount: BigNumber | number): Promise<number> => {
                 return new Promise((resolve, reject) => {
-                    this._instance.mint.estimateGas(_to, _amount).then((g) => resolve(g));
+                    this._instance.mint.estimateGas(_to, _amount).then((g: any) => resolve(g));
                 });
             }
         });
@@ -542,8 +542,8 @@ export class MintableToken extends SoltsiceContract {
             if (!privateKey) {
                 return new Promise((resolve, reject) => {
                     this._instance.finishMinting( txParams || this._sendParams)
-                        .then((res) => resolve(res))
-                        .catch((err) => reject(err));
+                        .then((res: any) => resolve(res))
+                        .catch((err: any) => reject(err));
                 });
             } else {
                 // tslint:disable-next-line:max-line-length
@@ -559,8 +559,8 @@ export class MintableToken extends SoltsiceContract {
             sendTransaction: Object.assign(( txParams?: W3.TX.TxParams): Promise<string> => {
                     return new Promise((resolve, reject) => {
                         this._instance.finishMinting.sendTransaction( txParams || this._sendParams)
-                            .then((res) => resolve(res))
-                            .catch((err) => reject(err));
+                            .then((res: any) => resolve(res))
+                            .catch((err: any) => reject(err));
                     });
                 },
                 {
@@ -587,7 +587,7 @@ export class MintableToken extends SoltsiceContract {
             // tslint:disable-next-line:variable-name
             estimateGas: (): Promise<number> => {
                 return new Promise((resolve, reject) => {
-                    this._instance.finishMinting.estimateGas().then((g) => resolve(g));
+                    this._instance.finishMinting.estimateGas().then((g: any) => resolve(g));
                 });
             }
         });

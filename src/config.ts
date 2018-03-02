@@ -5,7 +5,8 @@ export interface Config {
     web3: string;
     privateKey: string;
     networkId: number;
-    gasPrice: number
+    gasPrice: number;
+    hubAddress: string;
 }
 
 let configpath = path.join(__dirname, '../config/config.json');

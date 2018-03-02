@@ -8,7 +8,7 @@
   "scripts": {
     "start:old": "babel-node app.js",
     "start": "./node_modules/.bin/ts-node src/server.ts",
-    "dev": "nodemon app.js --exec babel-node",
+    "dev": "nodemon node_modules/.bin/ts-node src/server.ts",
     "test": "jest --watch",
     "dist": "copyfiles -u 2 build/contracts/**/* src/artifacts && soltsice ./src/artifacts ./src/contracts && tsc && copyfiles -u 2 src/artifacts/**/* dist/artifacts",
     "deploy": "./node_modules/.bin/ts-node src/deploy.ts"
@@ -30,7 +30,7 @@
     "fastify": "^0.35.2",
     "jest": "^21.2.1",
     "nodemon": "^1.12.1",
-    "soltsice": "^0.10.11",
+    "soltsice": "^0.11.1",
     "ts-jest": "^21.2.3",
     "tslint": "^5.8.0",
     "web3": "^1.0.0-beta.26"
