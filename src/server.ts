@@ -35,6 +35,13 @@ const opts = {
     }
 }
 
+const hubAddress = config.hubAddress;
+if (!hubAddress) {
+    throw new Error('Hub address must be set in config file.')
+}
+let hubContract: TokenStarsAuctionHub; // created in init() below
+let knownAuctions: any = {};
+
 server.post('/contract', opts, async (request, reply) => {
     console.log('BODY', request.body);
     if (!request.body.contract || (request.body.contract as string).toLowerCase() != 'auction') {
@@ -94,36 +101,56 @@ server.post('/contract', opts, async (request, reply) => {
 
 
 server.get('/events/*', async (request, reply) => {
+    try {
+        const commands = request.params['*'].split('/')
 
-    const commands = request.params['*'].split('/')
-
-    const address = ((commands[0] || request.body.at) as string).toLowerCase();
-
-    // legacy
-    if (address === '0xa4ae66156fb34c237c9dd905149a344672e113e4' || address === '0xa3050e720aa6e35e28187bfa7c9e27677eb17bed') {
-
-        const contract = await LegacyAuction.at(address);
+        const address = ((commands[0] || request.body.at) as string).toLowerCase();
 
         const fromBlock = commands.length > 1 ? +commands[1] : 0;
-        // see https://github.com/ethereum/web3.js/issues/989
-        contract.getPastEvents("allEvents", {
-            fromBlock: fromBlock,
-            toBlock: 'latest'
-        }, (error, result) => {
-            if (error) {
-                console.log('ERR', error);
-                return reply.send(error)
-            }
+
+        // legacy
+        if (!knownAuctions[address]) {
+
+            const contract = await LegacyAuction.at(address);
+
+            let result = await contract.getEventLogs(fromBlock);
+
             return reply.send({
                 result,
                 statusCode: 200
-            })
-        })
-    } else {
-        throw new Error('TODO Not implemented');
+            });
+
+        } else {
+
+            const contract = await LegacyAuction.at(address);
+
+            let events = await hubContract.getEventLogs(fromBlock);
+
+            // temp, filter in memory by address
+            let result = events
+                .filter(ev => ev.args!.auction && ev.args!.auction === address)
+                .map(ev => {
+                    if (ev.event === 'ManagedBid' && ev.args!.knownManagedBidder !== W3.zeroAddress) {
+                        ev.event = 'ManagedBid2';
+                    } else if (ev.event === 'Bid') {
+                        ev.args!.tokensBid = ev.args!.tokensBidInEther;
+                    }else if (ev.event === 'NewHighestBidder') {
+                        ev.args!.bid = ev.args!.totalBid;
+                    }
+                    return ev;
+                });
+            
+            return reply.send({
+                result,
+                statusCode: 200
+            });
+
+            throw new Error('TODO Not implemented');
+        }
+
+    } catch (e) {
+        return reply.send(e);
     }
-
-
 })
 
 server.post('/getTransaction', opts, async (request, reply) => {
@@ -132,14 +159,14 @@ server.post('/getTransaction', opts, async (request, reply) => {
 
         let txHash = request.body.args[0];
         let receipt = await w3.waitTransactionReceipt(txHash);
-        let logs: W3.Log[] = [];
+        let logs: W3.EventLog[] = [];
         let address = receipt.to ? (receipt.to as string).toLowerCase() : '';
         if (address && receipt.logs) {
-            if (address === '0xa4ae66156fb34c237c9dd905149a344672e113e4' || address === '0xa3050e720aa6e35e28187bfa7c9e27677eb17bed') {
-                const contract = await LegacyAuction.at(address);
-                logs = await contract.parseLogs(receipt.logs);
+            if (address.toLowerCase() === hubAddress) {
+                logs = await hubContract.parseLogs(receipt.logs);
             } else {
-                const contract = await TokenStarsAuction.at(address);
+                
+                const contract = await LegacyAuction.at(address);
                 logs = await contract.parseLogs(receipt.logs);
             }
         }
@@ -160,15 +187,31 @@ async function start() {
     if (nid != networkId) {
         throw new Error('Network Id does not match config.');
     }
+
+    hubContract = await TokenStarsAuctionHub.at(hubAddress, w3);
+
+    console.log('ALL LOGS: ', await hubContract.getEventLogs());
+
+    let newActions = await hubContract.getEventLogs(undefined, undefined, 'NewAction');
+
+    newActions.forEach(element => {
+        let auctionAddress = element.args!.auction;
+        knownAuctions[auctionAddress] = element.args!.item;
+    });
+
+    console.log('Known Auctions: ', knownAuctions);
+
     // Run the server!
-    server.listen(3000, function (err) {
+    server.listen(3000, async (err) => {
         if (err) {
             console.log('ERR:', err);
             throw err;
         }
+
         console.log(`server listening on ${server.server.address().port}`);
         server.log.info(`server listening on ${server.server.address().port}`)
     })
+
 }
 
 start();
