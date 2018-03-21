@@ -3,6 +3,7 @@ import { W3 } from 'soltsice';
 import { config } from './config';
 import * as http from 'http';
 import { TokenStarsAuction, TokenStarsAuctionHub, LegacyAuction } from './contracts'
+import { BigNumber } from 'bignumber.js';
 
 // synchronous globals setup
 const w3 = new W3(new W3.providers.HttpProvider(config.web3));
@@ -122,7 +123,7 @@ server.get('/events/*', async (request, reply) => {
 
         } else {
 
-            const contract = await LegacyAuction.at(address);
+            const contract = await TokenStarsAuction.at(address);
 
             let events = await hubContract.getEventLogs(fromBlock);
 
@@ -180,6 +181,62 @@ server.post('/getTransaction', opts, async (request, reply) => {
     }
 })
 
+
+server.get('/votingresults/*', async (request, reply) => {
+    try {
+        const commands = request.params['*'].split('/')
+
+        const votingId = +(commands[0]);
+
+        // TODO detect block from endSeconds
+
+        // Values will be above int53 (float64 max for precise int), return as strings
+        return [new BigNumber(votingId * 1000000000).mul(1000000000).floor().toFormat(), new BigNumber(votingId * 1000000000).mul(2000000000).floor().toString(), new BigNumber(votingId * 1000000000).mul(3000000000).floor().toString(), new BigNumber(votingId * 1000000000).mul(4000000000).floor().toString()];
+
+    } catch (e) {
+        return reply.send(e);
+    }
+})
+
+server.get('/votingoptions/*', async (request, reply) => {
+    try {
+        const commands = request.params['*'].split('/')
+
+        const votingId = +(commands[0]);
+
+        // up to 32 ascii symbols
+        return ["first" + votingId.toString(), "second", "third", "forth"];
+
+    } catch (e) {
+        return reply.send(e);
+    }
+})
+
+server.get('/votingquorum/*', async (request, reply) => {
+    try {
+        const commands = request.params['*'].split('/')
+
+        const votingId = +(commands[0]);
+
+        return new BigNumber(votingId * 1000000000).mul(1000000000).floor().toFormat();
+
+    } catch (e) {
+        return reply.send(e);
+    }
+})
+
+server.get('/votingid/*', async (request, reply) => {
+    try {
+        const commands = request.params['*'].split('/')
+
+        const votingId = +(commands[0]);
+
+        return "Id for voting: " + votingId;
+
+    } catch (e) {
+        return reply.send(e);
+    }
+})
 
 
 async function start() {
