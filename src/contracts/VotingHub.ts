@@ -511,6 +511,17 @@ export class VotingHub extends SoltsiceContract {
     
     // tslint:disable-next-line:max-line-length
     // tslint:disable-next-line:variable-name
+    public getVote(_voting: BigNumber | number, _voter: string, txParams?: W3.TX.TxParams): Promise<BigNumber> {
+        return new Promise((resolve, reject) => {
+            this._instance.getVote
+                .call(_voting, _voter, txParams || this._sendParams)
+                .then((res: any) => resolve(res))
+                .catch((err: any) => reject(err));
+        });
+    }
+    
+    // tslint:disable-next-line:max-line-length
+    // tslint:disable-next-line:variable-name
     public tokenRates(_0: BigNumber | number, txParams?: W3.TX.TxParams): Promise<any> {
         return new Promise((resolve, reject) => {
             this._instance.tokenRates

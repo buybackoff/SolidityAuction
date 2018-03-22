@@ -449,8 +449,8 @@
           "contractDependencies": [
             1446,
             2800,
-            3698,
-            3827
+            3731,
+            3860
           ],
           "contractKind": "contract",
           "documentation": null,
@@ -458,8 +458,8 @@
           "linearizedBaseContracts": [
             2628,
             1446,
-            3698,
-            3827
+            3731,
+            3860
           ],
           "name": "TokenStarsAuctionHub",
           "scope": 2801
@@ -1216,7 +1216,7 @@
                       "overloadedDeclarations": [
                         null
                       ],
-                      "referencedDeclaration": 3495,
+                      "referencedDeclaration": 3528,
                       "type": "modifier ()",
                       "value": "onlyBot"
                     },
@@ -1259,7 +1259,7 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 4495,
+                              "referencedDeclaration": 4528,
                               "type": "function (bool) pure",
                               "value": "require"
                             },
@@ -1302,7 +1302,7 @@
                                   "overloadedDeclarations": [
                                     null
                                   ],
-                                  "referencedDeclaration": 4494,
+                                  "referencedDeclaration": 4527,
                                   "type": "uint256",
                                   "value": "now"
                                 },
@@ -1353,7 +1353,7 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 4495,
+                              "referencedDeclaration": 4528,
                               "type": "function (bool) pure",
                               "value": "require"
                             },
@@ -1450,7 +1450,7 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 4495,
+                              "referencedDeclaration": 4528,
                               "type": "function (bool) pure",
                               "value": "require"
                             },
@@ -1606,7 +1606,7 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 4535,
+                              "referencedDeclaration": 4568,
                               "type": "contract TokenStarsAuctionHub",
                               "value": "this"
                             },
@@ -2299,8 +2299,8 @@
           "contractDependencies": [
             1446,
             2800,
-            3698,
-            3827
+            3731,
+            3860
           ],
           "contractKind": "contract",
           "documentation": null,
@@ -2308,8 +2308,8 @@
           "linearizedBaseContracts": [
             2752,
             1446,
-            3698,
-            3827
+            3731,
+            3860
           ],
           "name": "TokenStarsAuctionHubMock",
           "scope": 2801
@@ -2893,7 +2893,7 @@
                       "overloadedDeclarations": [
                         null
                       ],
-                      "referencedDeclaration": 3495,
+                      "referencedDeclaration": 3528,
                       "type": "modifier ()",
                       "value": "onlyBot"
                     },
@@ -2936,7 +2936,7 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 4495,
+                              "referencedDeclaration": 4528,
                               "type": "function (bool) pure",
                               "value": "require"
                             },
@@ -2979,7 +2979,7 @@
                                   "overloadedDeclarations": [
                                     null
                                   ],
-                                  "referencedDeclaration": 4494,
+                                  "referencedDeclaration": 4527,
                                   "type": "uint256",
                                   "value": "now"
                                 },
@@ -3030,7 +3030,7 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 4495,
+                              "referencedDeclaration": 4528,
                               "type": "function (bool) pure",
                               "value": "require"
                             },
@@ -3127,7 +3127,7 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 4495,
+                              "referencedDeclaration": 4528,
                               "type": "function (bool) pure",
                               "value": "require"
                             },
@@ -3283,7 +3283,7 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 4537,
+                              "referencedDeclaration": 4570,
                               "type": "contract TokenStarsAuctionHubMock",
                               "value": "this"
                             },
@@ -4249,7 +4249,7 @@
                                   "overloadedDeclarations": [
                                     null
                                   ],
-                                  "referencedDeclaration": 4540,
+                                  "referencedDeclaration": 4573,
                                   "type": "contract super TokenStarsAuction",
                                   "value": "super"
                                 },
@@ -4522,7 +4522,7 @@
                                   "overloadedDeclarations": [
                                     null
                                   ],
-                                  "referencedDeclaration": 4540,
+                                  "referencedDeclaration": 4573,
                                   "type": "contract super TokenStarsAuction",
                                   "value": "super"
                                 },
@@ -4680,5 +4680,5 @@
   },
   "networks": {},
   "schemaVersion": "1.0.1",
-  "updatedAt": "2018-03-22T21:09:13.076Z"
+  "updatedAt": "2018-03-22T22:19:32.445Z"
 }

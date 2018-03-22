@@ -177,6 +177,16 @@ contract VotingHub is BotManageable {
         return now > votingState.endSeconds ? now - votingState.endSeconds : 0;
     }
 
+    function getVote(uint256 _voting, address _voter)
+        public
+        view
+        returns (uint256 choices)
+    {
+        VotingState storage votingState = votingStates[_voting];
+        uint256 vote = votingState.addressVotes[_voter];
+        return vote;
+    }
+
     function getChoices(uint256 _voting)
         public
         view
@@ -198,7 +208,7 @@ contract VotingHub is BotManageable {
     function getVotes(uint256 _voting)
         public
         view
-        returns (uint256[] votes, address lastVoter)
+        returns (uint256[] votes, address lastVoter, uint256 remainingGas)
     {
         return getVotesFrom(_voting, getLastVoter(_voting));
     }
@@ -207,7 +217,7 @@ contract VotingHub is BotManageable {
     function getVotesFrom(uint256 _voting, address _from)
         public
         view
-        returns (uint256[] votes, address lastVoter)
+        returns (uint256[] votes, address lastVoter, uint256 remainingGas)
     {
         // NB votingCount starts from 1
         require(_voting != 0x0);
@@ -215,39 +225,36 @@ contract VotingHub is BotManageable {
 
         VotingState storage votingState = votingStates[_voting];
 
+        uint256[] memory totalVotes = new uint256[](votingState.choiceCount);
         address voter = _from;
 
-        uint256[] memory totalVotes = new uint256[](votingState.choiceCount);
+        // placing in memory save c.50% gas
+        TokenRate[] memory tokenRatesMem = tokenRates;
 
         uint256 vote = votingState.addressVotes[voter];
         uint256 choice = vote & MASK32;
-        
-        // copy the array to memory for further multiple accesses
-        TokenRate[] memory tokenRatesMem = tokenRates;
 
         // the very first vote should have choice > 0 (but prevVoter is zero)
-        while (choice != 0) {
-            // votes accumulator for this voter
+        // remainig gas msut be enough for the next loop interation
+        while (choice != 0 && msg.gas > 100000) {
             uint256 totalVote = 0;
-
             // iterate over all tokens that participate in the voting
-            for (uint i = 0; i < tokenRatesMem.length; i++) {
-                TokenRate memory tr = tokenRatesMem[i];
-                totalVote = totalVote + (ERC20Basic(tr.token).balanceOf(voter)).mul(tr.value).div(tr.decimals);
+            for (uint i = 0; i < tokenRates.length; i++) {
+                totalVote += (ERC20Basic(tokenRatesMem[i].token).balanceOf(voter)).mul(tokenRatesMem[i].value).div(10 ** tokenRatesMem[i].decimals);  
             }
-            totalVotes[choice - 1].add(totalVote);
-
+            totalVotes[choice - 1] = totalVotes[choice - 1].add(totalVote);
             // go to previous voter
             voter = address(vote >> ADDRESS_OFFSET);
             // if prevVoter is zero then we have reached the first voter
             if (voter == 0x0) {
-                break;
+                // NB yes we could use break instead...;
+                choice = 0;
+            } else {
+                vote = votingState.addressVotes[voter];
+                choice = vote & MASK32;
             }
-
-            vote = votingState.addressVotes[voter];
-            choice = vote & MASK32;
         }
 
-        return (totalVotes, voter);
+        return (totalVotes, voter, msg.gas);
     }
 }

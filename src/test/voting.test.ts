@@ -36,7 +36,7 @@ let aceToken: AceToken;
 let teamToken: TeamToken;
 
 let keythereum = W3.getKeythereum();
-let voterCount: number = 10;
+let voterCount: number = 500;
 let voters: W3.Account[] = [];
 
 let votingHub: VotingHub;
@@ -149,85 +149,43 @@ it('Could deploy voting hub and create dummy voting', async () => {
         // console.log('VOTER TX: ', voterTxParams);
 
         // initial gas: 65k
-        let voteTx = await votingHub.vote(votingId, 0, voterTxParams, voters[i].privateKey);
-        console.log('VOTE TX', voteTx.logs[0]);
+        let voteTx = await votingHub.vote(votingId, 1, voterTxParams, voters[i].privateKey);
+        console.log(`VOTE TX ${i}: `, voteTx.logs[0]);
     }
 
     let lastVoter = await votingHub.getLastVoter(votingId);
     console.log('LAST VOTER: ', lastVoter);
 
-    let votingResult = await votingHub.getVotesFrom(votingId, lastVoter);
+    let balanceOfLast = await aceToken.balanceOf(lastVoter);
+    console.log('BALANCE: ', balanceOfLast.toFixed());
+    expect(balanceOfLast.toNumber()).toBeGreaterThan(0);
+
+    let lastVote = await votingHub.getVote(votingId, lastVoter);
+    console.log('LASTVOTE: ', lastVote);
+    
+    // TODO W3.toHex is wrong
+    // console.log('LASTVOTE PROTOTYPE: ', Object.getPrototypeOf(lastVote));
+    // console.log('IS BIG NUMBER: ', (lastVote as any).isBigNumber);
+    // console.log('LAST VOTE: ', lastVote.toString(16));
+
+    let votingResult = await votingHub.getVotesFrom(votingId, lastVoter, txDeployParams);
     console.log('VOTING RESULTS: ', votingResult);
 
-    // expect(await hub.isBot(activeAccount)).toBe(true);
-    // console.log('IS BOT');
+    let votes = (votingResult[0] as BigNumber[]).map(x => x.toNumber());
+    console.log('VOTES: ', votes);
 
-    // let auctionTx = await hub.createAuction(end, maxTokensInEther, minPrice, 'test_item', true, maxGasParams);
+    console.log('LAST VOTER: ', votingResult[1]);
+    expect(votingResult[1]).toEqual(W3.zeroAddress);
 
-    // console.log('AUCTION TX', auctionTx);
-    // let args = auctionTx.logs[0].args;
-
-    // console.log('ARGS', args);
-
-    // auctionAddress = args.auction;
-
-    // let auction = await Auction.at(auctionAddress, w3);
-
-    // let actualAddress = await auction.address;
-
-    // expect(actualAddress).toBe(auctionAddress);
-    // let item = await auction.item();
-    // console.log('TEST ITEM: ', item);
-    // expect(item).toBe('test_item');
+    console.log('GAS USED: ', (new BigNumber(txDeployParams.gas)).sub(votingResult[2]).toNumber());
+    // GAS USED:  4028356 for voterCount = 500
+    // The function has limit for 100k remaining gas and will return non-zero lastVoter = votingResult[1]
+    // if there are more voters to count. Then we need to start from the returned last voter and 
+    // sum the returned arrays until the last voter is zero.
+    
+    // TODO To test this without waiting too long we could set gas at 100 + c.8k X voterCountPerRequest
 })
 
 
-// it('Could send manage bid', async () => {
-
-//     let bid = weiPerToken;
-//     let auction = await Auction.at(auctionAddress, w3);
-
-//     console.log('SEND PARAMS', maxGasParams);
-//     let tx = await auction.managedBid(42, bid, maxGasParams);
-
-//     console.log('MANAGED BID TX', tx);
-
-//     let bidder = (await auction.highestManagedBidder()).toNumber();
-//     expect(bidder).toBe(42);
-
-//     let highestBid = (await auction.highestBid());
-//     expect(highestBid).toEqual(bid);
-// })
-
-
-// it('Could extend end time', async () => {
-//     if (await w3.isTestRPC) {
-//         let bid = weiPerToken.add(1);
-
-//         let auction = await Auction.at(auctionAddress, w3);
-
-//         let contractEnd = (await auction.endSeconds()).toNumber();
-
-//         expect(contractEnd).toBe(end);
-
-//         let minutesLeft = 10;
-
-//         await testrpc.increaseTimeTo(end - 60 * minutesLeft);
-
-//         let tx = await auction.managedBid(43, bid, maxGasParams);
-
-//         let newContractEnd = (await auction.endSeconds()).toNumber();
-
-//         expect(newContractEnd).toBeGreaterThan(contractEnd);
-//         expect(newContractEnd - contractEnd).toBe(60 * (30 - minutesLeft));
-
-//         console.log('NEW-OLD END', newContractEnd - contractEnd);
-
-//         let bidder = (await auction.highestManagedBidder()).toNumber();
-//         expect(bidder).toBe(43);
-
-//         let highestBid = (await auction.highestBid());
-//         expect(highestBid).toEqual(bid);
-//     }
-// })
-
+// TODO change vote for existing
+// TODO fast forward block after the end, calculate block and votes at the block
