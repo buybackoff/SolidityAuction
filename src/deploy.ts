@@ -1,6 +1,6 @@
 import { W3 } from 'soltsice';
 import { config } from './config';
-import { TokenStarsAuctionHub, TokenStarsAuctionHubMock, AceToken, TeamToken } from './contracts';
+import { TokenStarsAuctionHub, TokenStarsAuctionHubMock, AceToken, TeamToken, TokenStarsAuction } from './contracts';
 
 // throw new Error('Comment this line to deploy the auction hub');
 
@@ -43,6 +43,8 @@ async function deploy() {
             let testAuctionaddress = testAuctionTx.logs![0].args!.auction;
             console.log('TEST AUCTION ADDRESS: ', testAuctionaddress);
             console.log('Add this TokenStarsAuctionHub address to config/config.json to use it on backend: ', hub.address);
+
+            let testAuction = await TokenStarsAuction.at(testAuctionaddress);
         } else {
             console.log('SKIPPING DEPLOY: Config already has the hub address');
             let hub = await TokenStarsAuctionHub.at(config.hubAddress);

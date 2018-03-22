@@ -145,10 +145,7 @@ server.get('/events/*', async (request, reply) => {
                 result,
                 statusCode: 200
             });
-
-            throw new Error('TODO Not implemented');
         }
-
     } catch (e) {
         return reply.send(e);
     }
@@ -244,6 +241,9 @@ async function start() {
     if (nid != networkId) {
         throw new Error('Network Id does not match config.');
     }
+
+    let block = await w3.blockNumber;
+    console.log('CURRENT BLOCK: ', block);
 
     hubContract = await TokenStarsAuctionHub.at(hubAddress, w3);
 

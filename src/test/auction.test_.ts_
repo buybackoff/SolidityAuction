@@ -73,7 +73,7 @@ it('Could deploy auction factory and create auction', async () => {
     aceToken = await AceToken.new(maxGasParams, undefined, w3);
     teamToken = await TeamToken.new(maxGasParams, undefined, w3);
 
-    let tokenAddress = await aceToken.address;
+    let tokenAddress = aceToken.address;
     console.log('TOKEN ADDRESS', tokenAddress);
 
     let minPrice = weiPerToken;

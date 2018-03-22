@@ -17,4 +17,5 @@ export * from './TokenMock';
 export * from './TokenStarsAuction';
 export * from './TokenStarsAuctionHub';
 export * from './TokenStarsAuctionHubMock';
+export * from './VotingHub';
 export * from './WalletBasic';
