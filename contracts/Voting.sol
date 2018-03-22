@@ -4,7 +4,7 @@ import 'soltsice/contracts/BotManageable.sol';
 import 'zeppelin-solidity/contracts/math/SafeMath.sol';
 
 contract ERC20Basic {
-    function totalSupply() public view returns (uint256);
+    function balanceOf(address who) public view returns (uint256);
 }
 
 contract VotingHub is BotManageable {
@@ -102,8 +102,8 @@ contract VotingHub is BotManageable {
         return votingsCount;
     }
 
-    function voteForInternal(uint256 _voting, address _voter, uint256 _choice)
-        private
+    function vote(uint256 _voting, uint256 _choice)
+        external
         returns (bool status)
     {
         require(_voting != 0x0);
@@ -114,42 +114,23 @@ contract VotingHub is BotManageable {
         // choiceCount must be already checked to be a reasonable small number (or at least MASK32 - 1)
         require(_choice < votingState.choiceCount);
 
-        uint256 vote = votingState.addressVotes[_voter];
+        uint256 vote = votingState.addressVotes[msg.sender];
 
         // a new vote
         if (vote == 0x0) {
             // increment stored choice by 1 to be able to detect empty mapping field later
             vote = (uint256(votingState.lastVoter) << ADDRESS_OFFSET) | ((_choice + 1) & MASK32);
-            votingState.lastVoter = _voter;
+            votingState.lastVoter = msg.sender;
         } else {
             // clear last choice but keep previous voter unchanged
             vote = (vote & ~MASK32) | ((_choice + 1) & MASK32);
         }
         
-        votingState.addressVotes[_voter] = vote;
+        votingState.addressVotes[msg.sender] = vote;
 
-        Vote(_voting, _voter, _choice);
+        Vote(_voting, msg.sender, _choice);
 
         return true;
-    }
-
-    // possible, but don't do that
-    // function voteFor(uint256 _voting, address _voter, uint256 _choice)
-    //     external
-    //     onlyBot
-    //     returns (bool status)
-    // {
-    //     require(allowManagedVotes);
-    //     require(_voter != 0x0);
-    //     return voteForInternal(_voting, _voter, _choice);
-    // }
-
-    function vote(uint256 _voting, uint256 _choice)
-        // onlyActive - inline check to reuse votingState variable
-        external
-        returns (bool status)
-    {
-        return voteForInternal(_voting, msg.sender, _choice);
     }
 
     function getVotingsCount()
@@ -228,14 +209,15 @@ contract VotingHub is BotManageable {
         view
         returns (uint256[] votes, address lastVoter)
     {
+        // NB votingCount starts from 1
         require(_voting != 0x0);
         require(_from != 0x0);
 
         VotingState storage votingState = votingStates[_voting];
 
-        address voter = _from; //  votingState.lastVoter;
+        address voter = _from;
 
-        uint256[] memory totalVotes = new uint256[](votingState.choices.length);
+        uint256[] memory totalVotes = new uint256[](votingState.choiceCount);
 
         uint256 vote = votingState.addressVotes[voter];
         uint256 choice = vote & MASK32;
@@ -251,7 +233,7 @@ contract VotingHub is BotManageable {
             // iterate over all tokens that participate in the voting
             for (uint i = 0; i < tokenRatesMem.length; i++) {
                 TokenRate memory tr = tokenRatesMem[i];
-                totalVote = totalVote + (ERC20Basic(tr.token).totalSupply()).mul(tr.value).div(tr.decimals);
+                totalVote = totalVote + (ERC20Basic(tr.token).balanceOf(voter)).mul(tr.value).div(tr.decimals);
             }
             totalVotes[choice - 1].add(totalVote);
 

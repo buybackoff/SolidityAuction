@@ -75,10 +75,10 @@ export class ERC20Basic extends SoltsiceContract {
     
     // tslint:disable-next-line:max-line-length
     // tslint:disable-next-line:variable-name
-    public totalSupply( txParams?: W3.TX.TxParams): Promise<BigNumber> {
+    public balanceOf(who: string, txParams?: W3.TX.TxParams): Promise<BigNumber> {
         return new Promise((resolve, reject) => {
-            this._instance.totalSupply
-                .call( txParams || this._sendParams)
+            this._instance.balanceOf
+                .call(who, txParams || this._sendParams)
                 .then((res: any) => resolve(res))
                 .catch((err: any) => reject(err));
         });

@@ -112,138 +112,6 @@ it('Could mint tokens and create dummy voters', async () => {
         }
         console.timeEnd('minting');
 
-
-        // console.log('MINTED TX2', mintedTx2);
-
-        // let tokenBidderParams: W3.TX.TxParams = Object.assign({}, maxGasParams, { from: tokenBidder });
-
-        // let approveTxAce = await aceToken.approve(auctionAddress, 100, tokenBidderParams);
-        // console.log('APPROVE TX ACE', approveTxAce);
-        // let approveTxTeam = await teamToken.approve(auctionAddress, 500*10000, tokenBidderParams);
-        // console.log('APPROVE TX TEAM', approveTxTeam);
-
-        // let allowance = await aceToken.allowance(tokenBidder, auctionAddress);
-        // console.log('ALLOWANCE', allowance.toNumber());
-
-        // let auction = await Auction.at(auctionAddress, w3);
-
-        // try {
-        //     let tokensNumber = maxTokensInEther.div(weiPerToken).add(1);
-        //     let tx = await auction.bid(aceToken.address, tokensNumber, tokenBidderParams);
-        //     console.log('TX', tx);
-        //     expect(true).toBe(false); // fail if reached here
-        // } catch { }
-
-        // let etherBidInTokens = 10;
-        // let tokenBidderParamsWithValue: W3.TX.TxParams = Object.assign({}, tokenBidderParams, { value: weiPerToken.mul(etherBidInTokens) });
-
-        // let tokensNumber = maxTokensInEther.div(weiPerToken).sub(etherBidInTokens);
-        // console.log('TOKENS NUMBER: ', tokensNumber.toFormat());
-        // console.log('TOKENS NUMBER IN WEI: ', tokensNumber.mul(weiPerToken).toFormat());
-        // let highestBid0 = await auction.highestBid();
-
-        // console.log('HIGHEST BID0: ', highestBid0.toFixed());
-
-        // let txAce = await auction.bid(aceToken.address, tokensNumber.div(2), tokenBidderParamsWithValue);
-        // console.log('TX ACE', txAce);
-
-        // let tokenBidderParamsWithValue2 = Object.assign({}, tokenBidderParamsWithValue);
-        // tokenBidderParamsWithValue2.value = 0;
-        // let txTeam = await auction.bid(teamToken.address, tokensNumber.div(2).mul(10000), tokenBidderParamsWithValue2);
-        // console.log('TX TEAM', txTeam);
-
-        // let highestBid = await auction.highestBid();
-        // console.log('HIGHEST BID: ', highestBid.toFixed());
-        // expect(highestBid).toEqual(maxTokensInEther);
-        // let highestBidder = await auction.highestBidder();
-        // expect(highestBidder).toEqual(tokenBidder);
-
-        // try {
-        //     // could not withdraw while the highest bidder
-        //     await auction.withdraw(tokenBidderParams);
-        //     expect(true).toBe(false); // fail if reached here
-        // } catch{ }
-
-        // // Ether-only bidder overbids, token bidder should be able to withdraw
-
-        // let onlyEtherBidderParams = Object.assign({}, maxGasParams, { from: onlyEtherBidder });
-
-        // let newBid = highestBid.add(weiPerToken);
-        // let onlyEtherBidderParamsWithValue = Object.assign({}, onlyEtherBidderParams, { value: newBid.toNumber() });
-        // let tx3 = await auction.sendTransaction(onlyEtherBidderParamsWithValue);
-
-        // highestBid = await auction.highestBid();
-        // expect(highestBid).toEqual(newBid);
-        // highestBidder = await auction.highestBidder();
-        // expect(highestBidder).toEqual(onlyEtherBidder);
-
-        // // now token bidder could withdraw
-        // console.log(tokenBidderParams);
-
-        // // let tokenBalance = await auction.tokenBalances(tokenBidder);
-        // // let etherBalance = await auction.etherBalances(tokenBidder);
-        // let auctionTokenBalance = await aceToken.balanceOf(auctionAddress);
-        // console.log('AUCTION BALANCE: ', auctionTokenBalance.toFixed());
-
-        // // expect(tokenBalance).toEqual(auctionTokenBalance);
-        // expect(highestBidder).not.toEqual(tokenBidderParams.from);
-
-        // let withdrawData = await auction.withdraw.data();
-        // console.log('WITHDRAW DATA: ', withdrawData);
-        // let withdrawTx = await auction.withdraw(tokenBidderParams);
-        // console.log('WITHDRAW TX', withdrawTx);
-        // expect((await aceToken.balanceOf(auctionAddress)).toNumber()).toEqual(0);
-        // expect((await aceToken.balanceOf(tokenBidder)).toNumber()).toEqual(initialTokenBidderBalance); //  - 1
-
-
-        // // second attempt fails
-        // try {
-        //     await auction.withdraw(tokenBidderParams);
-        //     expect(true).toBe(false);
-        // } catch{ }
-
-
-        // // re-bid after withdraw so we could test finalization with tokens
-        // let tx4 = await auction.bid(aceToken.address, maxTokensInEther.div(weiPerToken), tokenBidderParamsWithValue);
-        // expect(await auction.highestBidder()).toEqual(tokenBidderParamsWithValue.from);
-
-        // highestBid = await auction.highestBid();
-
-        // // sum managed + direct bids
-
-        // let tx5 = await auction.managedBid2(1, weiPerToken, tokenBidderParamsWithValue.from, maxGasParams);
-        // expect(await auction.highestBidder()).toEqual(tokenBidderParamsWithValue.from);
-
-        // let highestBid2 = await auction.highestBid();
-        // expect(highestBid2).toEqual(highestBid.add(weiPerToken));
-        // expect(await auction.highestBidder()).toEqual(tokenBidderParamsWithValue.from);
-
-        // tokenBidderParamsWithValue = Object.assign({}, tokenBidderParamsWithValue, { value: weiPerToken });
-        // tokenBidderParamsWithValue.value = toBN(42000);
-        // console.log('LAST BID PARAMS', tokenBidderParamsWithValue);
-
-        // let tx6 = await auction.bid(W3.zeroAddress, 0, tokenBidderParamsWithValue);
-        // console.log('TX6', tx6);
-        // let highestBid3 = await auction.highestBid();
-        // expect(await auction.highestBidder()).toEqual(tokenBidderParamsWithValue.from);
-        // expect(highestBid3).toEqual(highestBid2.add(42000));
-
-        // // This was tested, but we need to finalize (too lazy to recreate an auction just to cancel it and redo all withdrawal logic)
-        // // let cancelTx = await auction.cancel();
-        // // console.log('CANCEL TX', cancelTx);
-        // // console.log(await auction.withdraw(onlyEtherBidderParams));
-        // // console.log(await auction.withdraw(tokenBidderParams));
-
-        // // move time forward to endTime + something
-        // await testrpc.increaseTimeTo((await auction.endSeconds()).toNumber() + 60);
-
-        // let finalizeTx = await auction.finalize(maxGasParams);
-        // console.log('FINALIZE TX', finalizeTx.logs);
-
-        // expect((await aceToken.balanceOf(maxGasParams.from))).toEqual(maxTokensInEther.div(weiPerToken));
-
-        // console.log('Wallet balance:', (await w3.getBalance(maxGasParams.from)).toFormat());
-
     }
 })
 
@@ -254,7 +122,7 @@ it('Could deploy voting hub and create dummy voting', async () => {
         {
             _wallet: activeAccount,
             _tokens: [aceToken.address, teamToken.address],
-            _rates: [weiPerToken, weiPerToken],
+            _rates: [1, 1],
             _decimals: [0, 4]
         },
         w3);
@@ -265,23 +133,31 @@ it('Could deploy voting hub and create dummy voting', async () => {
     console.log('CREATE VOTING TX', votingTx);
     let descriptionFromEvent = votingTx.logs[0].args.description;
     console.log('NEW VOTING DESCRIPTION FROM EVENT', descriptionFromEvent);
-    let idFromEvent = (votingTx.logs[0].args.voting as BigNumber).toNumber();
-    console.log('NEW VOTING ID FROM EVENT', idFromEvent);
+    let votingId = (votingTx.logs[0].args.voting as BigNumber).toNumber();
+    console.log('NEW VOTING ID FROM EVENT', votingId);
 
-    let descriptionFromHub = await votingHub.getDescription(idFromEvent);
+    let descriptionFromHub = await votingHub.getDescription(votingId);
     expect(descriptionFromHub).toEqual(descriptionFromEvent);
 
-    let choices = await votingHub.getChoices(idFromEvent);
+    let choices = await votingHub.getChoices(votingId);
     console.log('CHOICES: ', choices);
 
     // now we are ready to vote!
 
-    let voterTxParams: W3.TX.TxParams = Object.assign(txDeployParams, { from: voters[0].address });
-    console.log('VOTER TX: ', voterTxParams);
+    for (let i = 0; i < voterCount; i++) {
+        let voterTxParams: W3.TX.TxParams = Object.assign(txDeployParams, { from: voters[i].address });
+        // console.log('VOTER TX: ', voterTxParams);
 
-    // initial gas: 65k
-    let voteTx = await votingHub.vote(idFromEvent, 0, voterTxParams, voters[0].privateKey);
-    console.log('VOTE TX', voteTx);
+        // initial gas: 65k
+        let voteTx = await votingHub.vote(votingId, 0, voterTxParams, voters[i].privateKey);
+        console.log('VOTE TX', voteTx.logs[0]);
+    }
+
+    let lastVoter = await votingHub.getLastVoter(votingId);
+    console.log('LAST VOTER: ', lastVoter);
+
+    let votingResult = await votingHub.getVotesFrom(votingId, lastVoter);
+    console.log('VOTING RESULTS: ', votingResult);
 
     // expect(await hub.isBot(activeAccount)).toBe(true);
     // console.log('IS BOT');
