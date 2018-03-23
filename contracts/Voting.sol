@@ -12,12 +12,12 @@ contract VotingHub is BotManageable {
 
     uint256 constant MASK32 = (2**32 - 1);
     uint256 constant ADDRESS_OFFSET = 96;
-    uint256 private votingsCount;
+    uint32 private votingsCount;
 
     struct TokenRate {
-        address token;
         uint256 value;
         uint256 decimals;
+        address token;
     }
 
     // We cannot iterate over a mapping, but given that we need to store only a single number (usually a byte)
@@ -31,28 +31,37 @@ contract VotingHub is BotManageable {
     //     uint32 choice;
     // }
 
+    // fixed during creation and ar enot changed/read during vote
+    struct VotingDescription {
+        uint256 minimumVotes;
+        // address lastVoter;
+        // uint32 choiceCount; // TODO check in CreateVoting
+        // uint64 endSeconds;
+        // current vote by address, see VoteLayout above
+        // mapping(address => uint256) addressVotes;
+        bytes32[] choices;
+        string description;
+    }
+
     struct VotingState {
         // current vote by address, see VoteLayout above
         mapping(address => uint256) addressVotes;
-        bytes32[] choices;
-        // uint256[] totalVotes; // TODO delete, not needed if we could read at block
-        uint256 choiceCount; // TODO check in CreateVoting
-        uint256 endSeconds;
-        uint256 minimumVotes;
+        // uint256 minimumVotes;
         address lastVoter;
-        // bool cancelled;
-        // bool finalized;
-        string description;
-        
+        uint64 endSeconds;
+        uint32 choiceCount; // TODO check in CreateVoting
+        // bytes32[] choices;
+        // string description;
     }
 
     TokenRate[] public tokenRates;
     
-    mapping(uint256 => VotingState) private votingStates;
+    mapping(uint32 => VotingState) private votingStates;
+    mapping(uint32 => VotingDescription) private votingDescriptions;
 
     event TokenRateUpdate(address indexed token, uint256 rate);
-    event Vote(uint256 indexed voting, address voter, uint256 choice);
-    event NewVoting(uint256 indexed voting, string description);
+    event Vote(uint32 indexed voting, address voter, uint32 choice);
+    event NewVoting(uint32 indexed voting, string description);
 
     function VotingHub 
         (address _wallet, address[] _tokens, uint256[] _rates, uint256[] _decimals)
@@ -70,13 +79,13 @@ contract VotingHub is BotManageable {
             require(_tokens[i] != 0x0);
             require(_rates[i] > 0);
             ERC20Basic token = ERC20Basic(_tokens[i]);
-            tokenRates.push(TokenRate(token, _rates[i], _decimals[i]));
+            tokenRates.push(TokenRate(_rates[i], _decimals[i], token));
             TokenRateUpdate(token, _rates[i]);
         }
     }
 
     function createVoting(
-        uint256 _endSeconds, 
+        uint64 _endSeconds, 
         string _description,
         bytes32[] _choices,
         uint256 _minimumVotes
@@ -86,23 +95,27 @@ contract VotingHub is BotManageable {
         returns (uint256)
     {
         require (_endSeconds > now);
+        require(_choices.length > 0 && _choices.length < MASK32); // Some day the last check will be technically meaningful :)
 
         votingsCount += 1;
 
+        // Init state
         VotingState storage votingState = votingStates[votingsCount];
-
         votingState.endSeconds = _endSeconds;
-        votingState.description = _description;
-        votingState.minimumVotes = _minimumVotes;
-        votingState.choices = _choices;
+        // let's skip overflow check "by Ethereum construction"
+        votingState.choiceCount = uint32(_choices.length);
 
-        votingState.choiceCount = _choices.length;
+        // Save description
+        VotingDescription storage votingDescription = votingDescriptions[votingsCount];
+        votingDescription.description = _description;
+        votingDescription.minimumVotes = _minimumVotes;
+        votingDescription.choices = _choices;
 
         NewVoting(votingsCount, _description);
         return votingsCount;
     }
 
-    function vote(uint256 _voting, uint256 _choice)
+    function vote(uint32 _voting, uint32 _choice)
         external
         returns (bool status)
     {
@@ -141,7 +154,7 @@ contract VotingHub is BotManageable {
         return votingsCount;
     }
 
-    function getLastVoter(uint256 _voting)
+    function getLastVoter(uint32 _voting)
         public
         view
         returns (address lastVoter)
@@ -150,16 +163,16 @@ contract VotingHub is BotManageable {
         return votingState.lastVoter;
     }
 
-    function getDescription(uint256 _voting)
+    function getDescription(uint32 _voting)
         public
         view
         returns (string description)
     {
-        VotingState storage votingState = votingStates[_voting];
-        return votingState.description;
+        VotingDescription storage votingDescription = votingDescriptions[_voting];
+        return votingDescription.description;
     }
 
-    function getEndSeconds(uint256 _voting)
+    function getEndSeconds(uint32 _voting)
         public
         view
         returns (uint256 description)
@@ -168,16 +181,16 @@ contract VotingHub is BotManageable {
         return votingState.endSeconds;
     }
 
-    function getRemainingSeconds(uint256 _voting)
+    function getRemainingSeconds(uint32 _voting)
         public
         view
         returns (uint256 description)
     {
         VotingState storage votingState = votingStates[_voting];
-        return now > votingState.endSeconds ? now - votingState.endSeconds : 0;
+        return votingState.endSeconds > now ? votingState.endSeconds - now : 0;
     }
 
-    function getVote(uint256 _voting, address _voter)
+    function getVote(uint32 _voting, address _voter)
         public
         view
         returns (uint256 choices)
@@ -187,25 +200,25 @@ contract VotingHub is BotManageable {
         return vote;
     }
 
-    function getChoices(uint256 _voting)
+    function getChoices(uint32 _voting)
         public
         view
         returns (bytes32[] choices)
     {
-        VotingState storage votingState = votingStates[_voting];
-        return votingState.choices;
+        VotingDescription storage votingDescription = votingDescriptions[_voting];
+        return votingDescription.choices;
     }
 
-    function getMinimumVotes(uint256 _voting)
+    function getMinimumVotes(uint32 _voting)
         public
         view
         returns (uint256 minimumVotes)
     {
-        VotingState storage votingState = votingStates[_voting];
-        return votingState.minimumVotes;
+        VotingDescription storage votingDescription = votingDescriptions[_voting];
+        return votingDescription.minimumVotes;
     }
 
-    function getVotes(uint256 _voting)
+    function getVotes(uint32 _voting)
         public
         view
         returns (uint256[] votes, address lastVoter, uint256 remainingGas)
@@ -214,7 +227,7 @@ contract VotingHub is BotManageable {
     }
 
     // NB Avoid overloads for easier typed access via Soltsice, use a different name
-    function getVotesFrom(uint256 _voting, address _from)
+    function getVotesFrom(uint32 _voting, address _from)
         public
         view
         returns (uint256[] votes, address lastVoter, uint256 remainingGas)
