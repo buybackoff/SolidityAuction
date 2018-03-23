@@ -7,6 +7,7 @@ export interface Config {
     networkId: number;
     gasPrice: number;
     hubAddress: string;
+    votingAddress: string;
 }
 
 let configpath = path.join(__dirname, '../config/config.json');

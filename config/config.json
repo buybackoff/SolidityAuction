@@ -3,5 +3,6 @@
     "privateKey": "",
     "networkId": 4,
     "gasPrice": 20000000000,
-    "hubAddress": ""
+    "hubAddress": "",
+    "votingAddress": ""
 }

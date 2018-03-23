@@ -2,7 +2,7 @@ import * as fastify from 'fastify';
 import { W3 } from 'soltsice';
 import { config } from './config';
 import * as http from 'http';
-import { TokenStarsAuction, TokenStarsAuctionHub, LegacyAuction } from './contracts'
+import { TokenStarsAuction, TokenStarsAuctionHub, LegacyAuction, VotingHub } from './contracts'
 import { BigNumber } from 'bignumber.js';
 
 // synchronous globals setup
@@ -36,12 +36,19 @@ const opts = {
     }
 }
 
-const hubAddress = config.hubAddress;
-if (!hubAddress) {
-    throw new Error('Hub address must be set in config file.')
+const auctionHubAddress = config.hubAddress;
+if (!auctionHubAddress) {
+    throw new Error('Auction Hub address must be set in config file as hubAddress.')
 }
-let hubContract: TokenStarsAuctionHub; // created in init() below
+let auctionHubContract: TokenStarsAuctionHub; // created in init() below
 let knownAuctions: any = {};
+
+const votingAddress = config.votingAddress;
+if (!votingAddress) {
+    throw new Error('Voting Hub address must be set in config file as votingAddress.')
+}
+let votingHubContract: VotingHub; // created in init() below
+
 
 server.post('/contract', opts, async (request, reply) => {
     console.log('BODY', request.body);
@@ -125,7 +132,7 @@ server.get('/events/*', async (request, reply) => {
 
             const contract = await TokenStarsAuction.at(address);
 
-            let events = await hubContract.getEventLogs(fromBlock);
+            let events = await auctionHubContract.getEventLogs(fromBlock);
 
             // temp, filter in memory by address
             let result = events
@@ -135,12 +142,12 @@ server.get('/events/*', async (request, reply) => {
                         ev.event = 'ManagedBid2';
                     } else if (ev.event === 'Bid') {
                         ev.args!.tokensBid = ev.args!.tokensBidInEther;
-                    }else if (ev.event === 'NewHighestBidder') {
+                    } else if (ev.event === 'NewHighestBidder') {
                         ev.args!.bid = ev.args!.totalBid;
                     }
                     return ev;
                 });
-            
+
             return reply.send({
                 result,
                 statusCode: 200
@@ -160,10 +167,10 @@ server.post('/getTransaction', opts, async (request, reply) => {
         let logs: W3.EventLog[] = [];
         let address = receipt.to ? (receipt.to as string).toLowerCase() : '';
         if (address && receipt.logs) {
-            if (address.toLowerCase() === hubAddress) {
-                logs = await hubContract.parseLogs(receipt.logs);
+            if (address.toLowerCase() === auctionHubAddress) {
+                logs = await auctionHubContract.parseLogs(receipt.logs);
             } else {
-                
+
                 const contract = await LegacyAuction.at(address);
                 logs = await contract.parseLogs(receipt.logs);
             }
@@ -181,28 +188,53 @@ server.post('/getTransaction', opts, async (request, reply) => {
 
 server.get('/votingresults/*', async (request, reply) => {
     try {
+
         const commands = request.params['*'].split('/')
 
         const votingId = +(commands[0]);
 
+        const fromBlock = commands.length > 1 ? +commands[1] : 0;
+
+        let txParams = W3.TX.txParamsDefaultDeploy(ownerAddress);
+
+        // TODO check if last is not zero
+        let votingResult = await votingHubContract.getVotes(votingId, txParams);
+
+        let votes = (votingResult[0] as BigNumber[]).map(x => x.toString());
+
         // TODO detect block from endSeconds
 
-        // Values will be above int53 (float64 max for precise int), return as strings
-        return [new BigNumber(votingId * 1000000000).mul(1000000000).floor().toFormat(), new BigNumber(votingId * 1000000000).mul(2000000000).floor().toString(), new BigNumber(votingId * 1000000000).mul(3000000000).floor().toString(), new BigNumber(votingId * 1000000000).mul(4000000000).floor().toString()];
+        return votes;
 
     } catch (e) {
         return reply.send(e);
     }
 })
 
-server.get('/votingoptions/*', async (request, reply) => {
+server.get('/votingchoices/*', async (request, reply) => {
     try {
         const commands = request.params['*'].split('/')
 
         const votingId = +(commands[0]);
 
-        // up to 32 ascii symbols
-        return ["first" + votingId.toString(), "second", "third", "forth"];
+        let votingChoices = (await votingHubContract.getChoices(votingId)).map(hex => w3.web3.toAscii(hex).replace(/\u0000/g, ''));
+
+        return votingChoices;
+
+    } catch (e) {
+        return reply.send(e);
+    }
+})
+
+server.get('/votingdescription/*', async (request, reply) => {
+    try {
+        const commands = request.params['*'].split('/')
+
+        const votingId = +(commands[0]);
+
+        let description = (await votingHubContract.getDescription(votingId));
+
+        return description;
 
     } catch (e) {
         return reply.send(e);
@@ -215,20 +247,68 @@ server.get('/votingquorum/*', async (request, reply) => {
 
         const votingId = +(commands[0]);
 
-        return new BigNumber(votingId * 1000000000).mul(1000000000).floor().toFormat();
+        let quorum = (await votingHubContract.getMinimumVotes(votingId));
+
+        return quorum.toString();
 
     } catch (e) {
         return reply.send(e);
     }
 })
 
-server.get('/votingid/*', async (request, reply) => {
+server.get('/votingendseconds/*', async (request, reply) => {
     try {
         const commands = request.params['*'].split('/')
 
         const votingId = +(commands[0]);
 
-        return "Id for voting: " + votingId;
+        let endSeconds = (await votingHubContract.getEndSeconds(votingId));
+
+        return endSeconds.toString();
+
+    } catch (e) {
+        return reply.send(e);
+    }
+})
+
+server.get('/votingremaningseconds/*', async (request, reply) => {
+    try {
+        const commands = request.params['*'].split('/')
+
+        const votingId = +(commands[0]);
+
+        let remainingSeconds = (await votingHubContract.getRemainingSeconds(votingId));
+
+        return remainingSeconds.toString();
+
+    } catch (e) {
+        return reply.send(e);
+    }
+})
+
+server.get('/votingscount', async (request, reply) => {
+    try {
+        let count = await votingHubContract.getVotingsCount();
+
+        return count.toString();
+
+    } catch (e) {
+        return reply.send(e);
+    }
+})
+
+server.get('/votingevents/*', async (request, reply) => {
+    try {
+        const commands = request.params['*'].split('/')
+
+        const fromBlock = commands.length > 0 ? +commands[0] : 0;
+
+        let result = await votingHubContract.getEventLogs(fromBlock);
+
+        return reply.send({
+            result,
+            statusCode: 200
+        });
 
     } catch (e) {
         return reply.send(e);
@@ -245,11 +325,10 @@ async function start() {
     let block = await w3.blockNumber;
     console.log('CURRENT BLOCK: ', block);
 
-    hubContract = await TokenStarsAuctionHub.at(hubAddress, w3);
+    auctionHubContract = await TokenStarsAuctionHub.at(auctionHubAddress, w3);
+    // console.log('ALL LOGS: ', await auctionHubContract.getEventLogs());
 
-    console.log('ALL LOGS: ', await hubContract.getEventLogs());
-
-    let newActions = await hubContract.getEventLogs(undefined, undefined, 'NewAction');
+    let newActions = await auctionHubContract.getEventLogs(undefined, undefined, 'NewAction'); // NB Typo in already deployed contract
 
     newActions.forEach(element => {
         let auctionAddress = element.args!.auction;
@@ -257,6 +336,9 @@ async function start() {
     });
 
     console.log('Known Auctions: ', knownAuctions);
+
+    votingHubContract = await VotingHub.at(votingAddress, w3);
+
 
     // Run the server!
     server.listen(3000, async (err) => {

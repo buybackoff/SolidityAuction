@@ -11,7 +11,8 @@
     "dev": "nodemon node_modules/.bin/ts-node src/server.ts",
     "test": "jest --watch",
     "dist": "copyfiles -u 2 build/contracts/**/* src/artifacts && soltsice ./src/artifacts ./src/contracts && tsc && copyfiles -u 2 src/artifacts/**/* dist/artifacts",
-    "deploy": "./node_modules/.bin/ts-node src/deploy.ts"
+    "deploy:auction": "./node_modules/.bin/ts-node src/deploy.auction.ts",
+    "deploy:voting": "./node_modules/.bin/ts-node src/deploy.voting.ts"
   },
   "author": "Victor Baybekov",
   "license": "MIT",

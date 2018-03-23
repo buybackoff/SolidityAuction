@@ -36,7 +36,7 @@ let aceToken: AceToken;
 let teamToken: TeamToken;
 
 let keythereum = W3.getKeythereum();
-let voterCount: number = 500;
+let voterCount: number = 20;
 let voters: W3.Account[] = [];
 
 let votingHub: VotingHub;
@@ -182,7 +182,7 @@ it('Could deploy voting hub and create dummy voting', async () => {
     // The function has limit for 100k remaining gas and will return non-zero lastVoter = votingResult[1]
     // if there are more voters to count. Then we need to start from the returned last voter and 
     // sum the returned arrays until the last voter is zero.
-    
+
     // TODO To test this without waiting too long we could set gas at 100 + c.8k X voterCountPerRequest
 })
 

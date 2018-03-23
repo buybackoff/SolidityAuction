@@ -230,16 +230,22 @@ contract VotingHub is BotManageable {
 
         // placing in memory save c.50% gas
         TokenRate[] memory tokenRatesMem = tokenRates;
+        uint256 tokenCount = tokenRatesMem.length;
 
         uint256 vote = votingState.addressVotes[voter];
         uint256 choice = vote & MASK32;
 
+        // TODO (review) if we cannot iterate at least once then output is meaningless
+        // duplicate condition, review
+        require(choice != 0 && msg.gas > 20000);
+
         // the very first vote should have choice > 0 (but prevVoter is zero)
         // remainig gas msut be enough for the next loop interation
-        while (choice != 0 && msg.gas > 100000) {
+        while (choice != 0 && msg.gas > 20000) {
             uint256 totalVote = 0;
             // iterate over all tokens that participate in the voting
-            for (uint i = 0; i < tokenRates.length; i++) {
+            for (uint i = 0; i < tokenCount; i++) {
+                // This line costs c.7k per iteration
                 totalVote += (ERC20Basic(tokenRatesMem[i].token).balanceOf(voter)).mul(tokenRatesMem[i].value).div(10 ** tokenRatesMem[i].decimals);  
             }
             totalVotes[choice - 1] = totalVotes[choice - 1].add(totalVote);
@@ -247,7 +253,7 @@ contract VotingHub is BotManageable {
             voter = address(vote >> ADDRESS_OFFSET);
             // if prevVoter is zero then we have reached the first voter
             if (voter == 0x0) {
-                // NB yes we could use break instead...;
+                // NB yes we could use break instead... and hope we know which loop we are exiting :)
                 choice = 0;
             } else {
                 vote = votingState.addressVotes[voter];
