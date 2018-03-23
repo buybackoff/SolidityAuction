@@ -12,7 +12,7 @@ contract VotingHub is BotManageable {
 
     uint256 constant MASK32 = (2**32 - 1);
     uint256 constant ADDRESS_OFFSET = 96;
-    uint32 private votingsCount;
+    uint256 private votingsCount;
 
     struct TokenRate {
         uint256 value;
@@ -31,37 +31,25 @@ contract VotingHub is BotManageable {
     //     uint32 choice;
     // }
 
-    // fixed during creation and ar enot changed/read during vote
-    struct VotingDescription {
+    
+    struct VotingState {
         uint256 minimumVotes;
-        // address lastVoter;
-        // uint32 choiceCount; // TODO check in CreateVoting
-        // uint64 endSeconds;
+        address lastVoter;
+        uint32 choiceCount; // TODO check in CreateVoting
+        uint64 endSeconds;
         // current vote by address, see VoteLayout above
-        // mapping(address => uint256) addressVotes;
+        mapping(address => uint256) addressVotes;
         bytes32[] choices;
         string description;
     }
 
-    struct VotingState {
-        // current vote by address, see VoteLayout above
-        mapping(address => uint256) addressVotes;
-        // uint256 minimumVotes;
-        address lastVoter;
-        uint64 endSeconds;
-        uint32 choiceCount; // TODO check in CreateVoting
-        // bytes32[] choices;
-        // string description;
-    }
-
     TokenRate[] public tokenRates;
     
-    mapping(uint32 => VotingState) private votingStates;
-    mapping(uint32 => VotingDescription) private votingDescriptions;
+    mapping(uint256 => VotingState) private votingStates;
 
     event TokenRateUpdate(address indexed token, uint256 rate);
-    event Vote(uint32 indexed voting, address voter, uint32 choice);
-    event NewVoting(uint32 indexed voting, string description);
+    event Vote(uint256 indexed voting, address voter, uint256 choice);
+    event NewVoting(uint256 indexed voting, string description);
 
     function VotingHub 
         (address _wallet, address[] _tokens, uint256[] _rates, uint256[] _decimals)
@@ -95,27 +83,24 @@ contract VotingHub is BotManageable {
         returns (uint256)
     {
         require (_endSeconds > now);
-        require(_choices.length > 0 && _choices.length < MASK32); // Some day the last check will be technically meaningful :)
 
         votingsCount += 1;
 
-        // Init state
         VotingState storage votingState = votingStates[votingsCount];
+
         votingState.endSeconds = _endSeconds;
+        votingState.description = _description;
+        votingState.minimumVotes = _minimumVotes;
+        votingState.choices = _choices;
+
         // let's skip overflow check "by Ethereum construction"
         votingState.choiceCount = uint32(_choices.length);
-
-        // Save description
-        VotingDescription storage votingDescription = votingDescriptions[votingsCount];
-        votingDescription.description = _description;
-        votingDescription.minimumVotes = _minimumVotes;
-        votingDescription.choices = _choices;
 
         NewVoting(votingsCount, _description);
         return votingsCount;
     }
 
-    function vote(uint32 _voting, uint32 _choice)
+    function vote(uint256 _voting, uint256 _choice)
         external
         returns (bool status)
     {
@@ -154,7 +139,7 @@ contract VotingHub is BotManageable {
         return votingsCount;
     }
 
-    function getLastVoter(uint32 _voting)
+    function getLastVoter(uint256 _voting)
         public
         view
         returns (address lastVoter)
@@ -163,16 +148,16 @@ contract VotingHub is BotManageable {
         return votingState.lastVoter;
     }
 
-    function getDescription(uint32 _voting)
+    function getDescription(uint256 _voting)
         public
         view
         returns (string description)
     {
-        VotingDescription storage votingDescription = votingDescriptions[_voting];
-        return votingDescription.description;
+        VotingState storage votingState = votingStates[_voting];
+        return votingState.description;
     }
 
-    function getEndSeconds(uint32 _voting)
+    function getEndSeconds(uint256 _voting)
         public
         view
         returns (uint256 description)
@@ -181,16 +166,16 @@ contract VotingHub is BotManageable {
         return votingState.endSeconds;
     }
 
-    function getRemainingSeconds(uint32 _voting)
+    function getRemainingSeconds(uint256 _voting)
         public
         view
         returns (uint256 description)
     {
         VotingState storage votingState = votingStates[_voting];
-        return votingState.endSeconds > now ? votingState.endSeconds - now : 0;
+        return now > votingState.endSeconds ? now - votingState.endSeconds : 0;
     }
 
-    function getVote(uint32 _voting, address _voter)
+    function getVote(uint256 _voting, address _voter)
         public
         view
         returns (uint256 choices)
@@ -200,25 +185,25 @@ contract VotingHub is BotManageable {
         return vote;
     }
 
-    function getChoices(uint32 _voting)
+    function getChoices(uint256 _voting)
         public
         view
         returns (bytes32[] choices)
     {
-        VotingDescription storage votingDescription = votingDescriptions[_voting];
-        return votingDescription.choices;
+        VotingState storage votingState = votingStates[_voting];
+        return votingState.choices;
     }
 
-    function getMinimumVotes(uint32 _voting)
+    function getMinimumVotes(uint256 _voting)
         public
         view
         returns (uint256 minimumVotes)
     {
-        VotingDescription storage votingDescription = votingDescriptions[_voting];
-        return votingDescription.minimumVotes;
+        VotingState storage votingState = votingStates[_voting];
+        return votingState.minimumVotes;
     }
 
-    function getVotes(uint32 _voting)
+    function getVotes(uint256 _voting)
         public
         view
         returns (uint256[] votes, address lastVoter, uint256 remainingGas)
@@ -227,7 +212,7 @@ contract VotingHub is BotManageable {
     }
 
     // NB Avoid overloads for easier typed access via Soltsice, use a different name
-    function getVotesFrom(uint32 _voting, address _from)
+    function getVotesFrom(uint256 _voting, address _from)
         public
         view
         returns (uint256[] votes, address lastVoter, uint256 remainingGas)

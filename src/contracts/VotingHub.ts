@@ -85,64 +85,6 @@ export class VotingHub extends SoltsiceContract {
     }
     
     // tslint:disable-next-line:member-ordering
-    public createVoting = Object.assign(
-        // tslint:disable-next-line:max-line-length
-        // tslint:disable-next-line:variable-name
-        (_endSeconds: BigNumber | number, _description: string, _choices: string[], _minimumVotes: BigNumber | number, txParams?: W3.TX.TxParams, privateKey?: string): Promise<W3.TX.TransactionResult> => {
-            if (!privateKey) {
-                return new Promise((resolve, reject) => {
-                    this._instance.createVoting(_endSeconds, _description, _choices, _minimumVotes, txParams || this._sendParams)
-                        .then((res: any) => resolve(res))
-                        .catch((err: any) => reject(err));
-                });
-            } else {
-                // tslint:disable-next-line:max-line-length
-                return this.w3.sendSignedTransaction(this.address, privateKey, this._instance.createVoting.request(_endSeconds, _description, _choices, _minimumVotes).params[0].data, txParams || this._sendParams, undefined)
-                    .then(txHash => {
-                        return this.waitTransactionReceipt(txHash);
-                    });
-            }
-        },
-        {
-            // tslint:disable-next-line:max-line-length
-            // tslint:disable-next-line:variable-name
-            sendTransaction: Object.assign((_endSeconds: BigNumber | number, _description: string, _choices: string[], _minimumVotes: BigNumber | number, txParams?: W3.TX.TxParams): Promise<string> => {
-                    return new Promise((resolve, reject) => {
-                        this._instance.createVoting.sendTransaction(_endSeconds, _description, _choices, _minimumVotes, txParams || this._sendParams)
-                            .then((res: any) => resolve(res))
-                            .catch((err: any) => reject(err));
-                    });
-                },
-                {
-                    // tslint:disable-next-line:max-line-length
-                    // tslint:disable-next-line:variable-name
-                    sendSigned: (_endSeconds: BigNumber | number, _description: string, _choices: string[], _minimumVotes: BigNumber | number, privateKey: string, txParams?: W3.TX.TxParams, nonce?: number): Promise<string> => {
-                        // tslint:disable-next-line:max-line-length
-                        return this.w3.sendSignedTransaction(this.address, privateKey, this._instance.createVoting.request(_endSeconds, _description, _choices, _minimumVotes).params[0].data, txParams || this._sendParams, nonce);
-                    }
-                }
-            )
-        },
-        {
-            // tslint:disable-next-line:max-line-length
-            // tslint:disable-next-line:variable-name
-            data: (_endSeconds: BigNumber | number, _description: string, _choices: string[], _minimumVotes: BigNumber | number): Promise<string> => {
-                return new Promise((resolve, reject) => {
-                    resolve(this._instance.createVoting.request(_endSeconds, _description, _choices, _minimumVotes).params[0].data);
-                });
-            }
-        },
-        {
-            // tslint:disable-next-line:max-line-length
-            // tslint:disable-next-line:variable-name
-            estimateGas: (_endSeconds: BigNumber | number, _description: string, _choices: string[], _minimumVotes: BigNumber | number): Promise<number> => {
-                return new Promise((resolve, reject) => {
-                    this._instance.createVoting.estimateGas(_endSeconds, _description, _choices, _minimumVotes).then((g: any) => resolve(g));
-                });
-            }
-        });
-    
-    // tslint:disable-next-line:member-ordering
     public enableBot = Object.assign(
         // tslint:disable-next-line:max-line-length
         // tslint:disable-next-line:variable-name
@@ -585,6 +527,64 @@ export class VotingHub extends SoltsiceContract {
                 .catch((err: any) => reject(err));
         });
     }
+    
+    // tslint:disable-next-line:member-ordering
+    public createVoting = Object.assign(
+        // tslint:disable-next-line:max-line-length
+        // tslint:disable-next-line:variable-name
+        (_endSeconds: BigNumber | number, _description: string, _choices: string[], _minimumVotes: BigNumber | number, txParams?: W3.TX.TxParams, privateKey?: string): Promise<W3.TX.TransactionResult> => {
+            if (!privateKey) {
+                return new Promise((resolve, reject) => {
+                    this._instance.createVoting(_endSeconds, _description, _choices, _minimumVotes, txParams || this._sendParams)
+                        .then((res: any) => resolve(res))
+                        .catch((err: any) => reject(err));
+                });
+            } else {
+                // tslint:disable-next-line:max-line-length
+                return this.w3.sendSignedTransaction(this.address, privateKey, this._instance.createVoting.request(_endSeconds, _description, _choices, _minimumVotes).params[0].data, txParams || this._sendParams, undefined)
+                    .then(txHash => {
+                        return this.waitTransactionReceipt(txHash);
+                    });
+            }
+        },
+        {
+            // tslint:disable-next-line:max-line-length
+            // tslint:disable-next-line:variable-name
+            sendTransaction: Object.assign((_endSeconds: BigNumber | number, _description: string, _choices: string[], _minimumVotes: BigNumber | number, txParams?: W3.TX.TxParams): Promise<string> => {
+                    return new Promise((resolve, reject) => {
+                        this._instance.createVoting.sendTransaction(_endSeconds, _description, _choices, _minimumVotes, txParams || this._sendParams)
+                            .then((res: any) => resolve(res))
+                            .catch((err: any) => reject(err));
+                    });
+                },
+                {
+                    // tslint:disable-next-line:max-line-length
+                    // tslint:disable-next-line:variable-name
+                    sendSigned: (_endSeconds: BigNumber | number, _description: string, _choices: string[], _minimumVotes: BigNumber | number, privateKey: string, txParams?: W3.TX.TxParams, nonce?: number): Promise<string> => {
+                        // tslint:disable-next-line:max-line-length
+                        return this.w3.sendSignedTransaction(this.address, privateKey, this._instance.createVoting.request(_endSeconds, _description, _choices, _minimumVotes).params[0].data, txParams || this._sendParams, nonce);
+                    }
+                }
+            )
+        },
+        {
+            // tslint:disable-next-line:max-line-length
+            // tslint:disable-next-line:variable-name
+            data: (_endSeconds: BigNumber | number, _description: string, _choices: string[], _minimumVotes: BigNumber | number): Promise<string> => {
+                return new Promise((resolve, reject) => {
+                    resolve(this._instance.createVoting.request(_endSeconds, _description, _choices, _minimumVotes).params[0].data);
+                });
+            }
+        },
+        {
+            // tslint:disable-next-line:max-line-length
+            // tslint:disable-next-line:variable-name
+            estimateGas: (_endSeconds: BigNumber | number, _description: string, _choices: string[], _minimumVotes: BigNumber | number): Promise<number> => {
+                return new Promise((resolve, reject) => {
+                    this._instance.createVoting.estimateGas(_endSeconds, _description, _choices, _minimumVotes).then((g: any) => resolve(g));
+                });
+            }
+        });
     
     // tslint:disable-next-line:max-line-length
     // tslint:disable-next-line:variable-name

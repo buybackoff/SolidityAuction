@@ -150,7 +150,7 @@ it('Could deploy voting hub and create dummy voting', async () => {
 
         // initial gas: 65k
         let voteTx = await votingHub.vote(votingId, 1, voterTxParams, voters[i].privateKey);
-        console.log(`VOTE TX ${i}: `, voteTx.logs[0]);
+        console.log(`VOTE TX ${i}: `, voteTx, voteTx.logs[0]);
     }
 
     let lastVoter = await votingHub.getLastVoter(votingId);
