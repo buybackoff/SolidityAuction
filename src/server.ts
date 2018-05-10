@@ -92,7 +92,7 @@ server.post('/contract', opts, async (request, reply) => {
     }
 
     try {
-        const result = await contract[method](...args);
+        const result = await contract[method](...args, W3.TX.txParamsDefaultSend(ownerAddress, 200000, gasPrice), privateKey);
         return reply.send({
             result,
             statusCode: 200

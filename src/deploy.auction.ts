@@ -18,7 +18,7 @@ txParams.gasPrice = 21000000000;
 async function deploy() {
     let nid = +(await w3.networkId);
     if (nid === 1) {
-        console.log('Will not automatically deploy on mainnet');
+        console.log('Will not automatically deploy on mainnet. Comment out this check.');
         return;
     }
     if (nid !== config.networkId) {
